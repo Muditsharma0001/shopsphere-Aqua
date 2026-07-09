@@ -13,15 +13,23 @@ enum Role {
   CUSTOMER
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+}
+
 model User {
-  id           String   @id @default(uuid())
-  email        String   @unique
-  passwordHash String
+  id           String       @id @default(uuid())
+  email        String       @unique
+  passwordHash String?
   name         String
-  role         Role     @default(CUSTOMER)
-  isVerified   Boolean  @default(false)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  role         Role         @default(CUSTOMER)
+  isVerified   Boolean      @default(false)
+  googleId     String?      @unique
+  avatarUrl    String?
+  provider     AuthProvider @default(LOCAL)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
   @@map("users")
 }

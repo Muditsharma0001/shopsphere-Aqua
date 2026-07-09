@@ -6,6 +6,8 @@ export interface User {
   name: string;
   role: UserRole;
   isVerified: boolean;
+  avatarUrl?: string | null;
+  provider?: 'LOCAL' | 'GOOGLE';
   createdAt: Date;
   updatedAt: Date;
 }

@@ -6,6 +6,7 @@ import dotenv from 'dotenv';
 import { ApiResponse } from '@shopsphere/shared-types';
 
 import productsRouter from './routes/products';
+import authRouter from './routes/auth';
 
 dotenv.config();
 
@@ -25,6 +26,7 @@ app.use(cookieParser());
 
 // Routes
 app.use('/api/products', productsRouter);
+app.use('/auth', authRouter);
 
 // Healthcheck
 app.get('/health', (req: Request, res: Response) => {

@@ -1,14 +1,45 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Product, ApiResponse } from '@shopsphere/shared-types';
+import { Product, ApiResponse, User } from '@shopsphere/shared-types';
+import Link from 'next/link';
 
 export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
+    const fetchProfile = async (retry = true) => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
+        
+        if (res.status === 401 && retry) {
+          const refreshRes = await fetch(`${apiUrl}/auth/refresh`, {
+            method: 'POST',
+            credentials: 'include',
+          });
+          if (refreshRes.ok) {
+            await fetchProfile(false);
+          } else {
+            setUser(null);
+          }
+        } else if (res.ok) {
+          const data: ApiResponse<User> = await res.json();
+          if (data.success && data.data) {
+            setUser(data.data);
+          }
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        console.error('Failed to fetch profile:', err);
+        setUser(null);
+      }
+    };
+
     const fetchProducts = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
@@ -32,8 +63,24 @@ export default function Home() {
       }
     };
 
+    fetchProfile();
     fetchProducts();
   }, []);
+
+  const handleLogout = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (res.ok) {
+        setUser(null);
+      }
+    } catch (err) {
+      console.error('Failed to logout:', err);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-indigo-500 selection:text-white">
@@ -54,10 +101,53 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/20">
+            <div className="hidden sm:flex items-center gap-2 rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-medium text-emerald-400 border border-emerald-500/20">
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
               Neon DB Connected
             </div>
+
+            {/* Authentication States */}
+            {user ? (
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
+                  {user.avatarUrl ? (
+                    <img
+                      src={user.avatarUrl}
+                      alt={user.name}
+                      className="h-8 w-8 rounded-full border border-zinc-700 object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-700 bg-zinc-800 text-sm font-semibold text-indigo-400">
+                      {user.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                  <span className="hidden md:inline text-sm font-medium text-zinc-300">
+                    {user.name}
+                  </span>
+                </div>
+                <button
+                  onClick={handleLogout}
+                  className="rounded-xl border border-zinc-800 bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-zinc-300 hover:border-zinc-700 hover:bg-zinc-800 transition-all duration-300"
+                >
+                  Sign Out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-3">
+                <Link
+                  href="/login"
+                  className="text-xs font-semibold text-zinc-300 hover:text-white transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/register"
+                  className="rounded-xl bg-indigo-600 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-indigo-500 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </div>
+            )}
           </div>
         </div>
       </header>
