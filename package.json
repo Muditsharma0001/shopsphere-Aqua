@@ -1,0 +1,22 @@
+{
+  "name": "shopsphere-monorepo",
+  "version": "1.0.0",
+  "private": true,
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev:web": "npm run dev --workspace=@shopsphere/web",
+    "dev:api": "npm run dev --workspace=@shopsphere/api",
+    "build:web": "npm run build --workspace=@shopsphere/web",
+    "build:api": "npm run build --workspace=@shopsphere/api",
+    "build": "npm run build --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "tsc --build"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "prettier": "^3.2.5"
+  }
+}
