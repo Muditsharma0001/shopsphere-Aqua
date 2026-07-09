@@ -21,3 +21,44 @@ export interface AuthResponse {
   user: User;
   accessToken: string;
 }
+
+export interface Category {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface Brand {
+  id: string;
+  name: string;
+  slug: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface ProductImage {
+  id: string;
+  url: string;
+  isFeatured: boolean;
+  productId: string;
+  createdAt: Date;
+}
+
+export interface Product {
+  id: string;
+  name: string;
+  slug: string;
+  description: string;
+  price: number;
+  compareAtPrice: number | null;
+  stock: number;
+  categoryId: string;
+  brandId: string;
+  category?: Category;
+  brand?: Brand;
+  images?: ProductImage[];
+  createdAt: Date;
+  updatedAt: Date;
+}
