@@ -12,6 +12,8 @@ interface NavbarProps {
 export default function Navbar({ onSearchClick }: NavbarProps) {
   const [scrolled, setScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [user, setUser] = useState<{ id: string; name: string; email: string; avatarUrl?: string | null } | null>(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   
   const cart = useCartStore((state) => state.cart);
   const wishlist = useCartStore((state) => state.wishlist);
@@ -19,6 +21,36 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
   const { theme, toggleTheme } = useThemeStore();
 
   const cartItemsCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+  useEffect(() => {
+    const checkUser = async () => {
+      try {
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+        const res = await fetch(`${apiUrl}/api/profile`, { credentials: 'include' });
+        const data = await res.json();
+        if (data.success) {
+          setUser(data.data);
+        } else {
+          setUser(null);
+        }
+      } catch (err) {
+        setUser(null);
+      }
+    };
+    checkUser();
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      await fetch(`${apiUrl}/auth/logout`, { method: 'POST', credentials: 'include' });
+      setUser(null);
+      setDropdownOpen(false);
+      window.location.href = '/';
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -137,14 +169,90 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
             {theme === 'dark' ? '☀️' : '🌙'}
           </button>
 
-          {/* Customer Dashboard Link */}
-          <Link
-            href="/portal"
-            className="p-2 h-9 w-9 rounded-full border border-[var(--border-primary)] bg-[var(--bg-surface)] hover:bg-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-xs flex items-center justify-center"
-            title="Choose Portal Experience"
-          >
-            👤
-          </Link>
+          {/* Profile Avatar & Dropdown */}
+          <div className="relative">
+            {user ? (
+              <button
+                onClick={() => setDropdownOpen(!dropdownOpen)}
+                className="h-9 w-9 rounded-full border border-[var(--border-primary)] bg-[var(--bg-surface)] hover:bg-[var(--border-primary)] overflow-hidden flex items-center justify-center cursor-pointer transition-all"
+                title="Account Menu"
+              >
+                {user.avatarUrl ? (
+                  <img src={user.avatarUrl} alt={user.name} className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-xs">👤</span>
+                )}
+              </button>
+            ) : (
+              <Link
+                href="/portal"
+                className="p-2 h-9 w-9 rounded-full border border-[var(--border-primary)] bg-[var(--bg-surface)] hover:bg-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-xs flex items-center justify-center"
+                title="Choose Portal Experience"
+              >
+                👤
+              </Link>
+            )}
+
+            {/* Dropdown Menu */}
+            {dropdownOpen && user && (
+              <div className="absolute right-0 mt-2.5 w-44 rounded-2xl border border-zinc-900 bg-zinc-950/95 backdrop-blur-xl p-2.5 shadow-2xl z-50 animate-scaleIn">
+                <div className="px-3 py-2 border-b border-zinc-900">
+                  <span className="block text-[9px] font-bold text-white uppercase truncate">{user.name}</span>
+                  <span className="block text-[7px] text-zinc-500 truncate mt-0.5">{user.email}</span>
+                </div>
+                <div className="pt-2 space-y-1">
+                  <Link
+                    href="/account"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-900/40 transition-colors"
+                  >
+                    Profile
+                  </Link>
+                  <Link
+                    href="/account"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-900/40 transition-colors"
+                  >
+                    Orders
+                  </Link>
+                  <Link
+                    href="/wishlist"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-900/40 transition-colors"
+                  >
+                    Wishlist
+                  </Link>
+                  <Link
+                    href="/account"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-900/40 transition-colors"
+                  >
+                    Addresses
+                  </Link>
+                  <Link
+                    href="/account"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-900/40 transition-colors"
+                  >
+                    Rewards
+                  </Link>
+                  <Link
+                    href="/account"
+                    onClick={() => setDropdownOpen(false)}
+                    className="block px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-zinc-400 hover:text-white hover:bg-zinc-900/40 transition-colors"
+                  >
+                    Settings
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                  >
+                    Logout
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
 
           <Link
             href="/shop"

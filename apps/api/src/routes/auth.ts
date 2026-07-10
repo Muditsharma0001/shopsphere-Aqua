@@ -35,6 +35,11 @@ router.get('/google', (req: Request, res: Response) => {
     });
   }
 
+  const role = req.query.role as string;
+  if (role) {
+    res.cookie('authRole', role.toUpperCase(), { maxAge: 10 * 60 * 1000, httpOnly: true });
+  }
+
   const authUrl = oauth2Client.generateAuthUrl({
     access_type: 'offline',
     scope: [
@@ -76,6 +81,9 @@ router.get('/google/callback', async (req: Request, res: Response) => {
       throw new Error('Invalid ID Token payload from Google');
     }
 
+    const targetRole = (req.cookies?.authRole || 'CUSTOMER').toUpperCase() as Role;
+    res.clearCookie('authRole');
+
     // Check if user exists (by googleId or email)
     let user = await prisma.user.findFirst({
       where: {
@@ -96,32 +104,31 @@ router.get('/google/callback', async (req: Request, res: Response) => {
           avatarUrl: payload.picture,
           provider: 'GOOGLE',
           isVerified: true,
+          role: targetRole,
         },
       });
-      console.log(`[Google Auth] Created new user: ${user.email}`);
+      console.log(`[Google Auth] Created new user: ${user.email} with role ${user.role}`);
     } else {
       // Link Google profile if existing user registered locally
+      const updateData: any = {
+        isVerified: true,
+      };
       if (!user.googleId) {
-        user = await prisma.user.update({
-          where: { id: user.id },
-          data: {
-            googleId: payload.sub,
-            avatarUrl: payload.picture || user.avatarUrl,
-            provider: 'GOOGLE',
-            isVerified: true,
-          },
-        });
-        console.log(`[Google Auth] Linked Google login to existing user: ${user.email}`);
-      } else {
-        // Update profile picture if it has changed
-        if (payload.picture && user.avatarUrl !== payload.picture) {
-          user = await prisma.user.update({
-            where: { id: user.id },
-            data: { avatarUrl: payload.picture },
-          });
-        }
-        console.log(`[Google Auth] Logged in existing user: ${user.email}`);
+        updateData.googleId = payload.sub;
+        updateData.provider = 'GOOGLE';
       }
+      if (payload.picture && user.avatarUrl !== payload.picture) {
+        updateData.avatarUrl = payload.picture;
+      }
+      if (user.role !== targetRole) {
+        updateData.role = targetRole;
+      }
+
+      user = await prisma.user.update({
+        where: { id: user.id },
+        data: updateData,
+      });
+      console.log(`[Google Auth] Logged in user: ${user.email} with role ${user.role}`);
     }
 
     // Generate JWT access & refresh tokens
@@ -144,8 +151,9 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     res.cookie('accessToken', accessToken, getCookieOptions(15 * 60 * 1000));
     res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
-    // Redirect user to the frontend home
-    res.redirect(process.env.FRONTEND_URL || 'http://localhost:3000');
+    // Redirect user to their corresponding route
+    const redirectPath = targetRole === 'BUSINESS_OWNER' ? '/business/dashboard' : '/';
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectPath}`);
   } catch (error: any) {
     console.error('[Google Callback Error]:', error);
     res.redirect(

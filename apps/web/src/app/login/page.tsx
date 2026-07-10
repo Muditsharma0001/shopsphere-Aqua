@@ -7,10 +7,12 @@ import { Suspense } from 'react';
 function LoginContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error');
+  const roleParam = searchParams.get('role') || 'CUSTOMER';
+  const role = roleParam.toUpperCase();
 
   const handleGoogleLogin = () => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-    window.location.href = `${apiUrl}/auth/google`;
+    window.location.href = `${apiUrl}/auth/google?role=${role}`;
   };
 
   return (
@@ -20,10 +22,10 @@ function LoginContent() {
           <span className="text-2xl font-bold text-white">S</span>
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold tracking-tight bg-gradient-to-r from-white to-zinc-300 bg-clip-text text-transparent">
-          Welcome back to ShopSphere
+          Sign In to ShopSphere
         </h2>
-        <p className="mt-2 text-center text-sm text-zinc-400">
-          Enter your credentials or use standard social sign-in.
+        <p className="mt-2 text-center text-xs text-indigo-400 uppercase tracking-widest font-bold">
+          Role Access: {role}
         </p>
       </div>
 
@@ -37,12 +39,12 @@ function LoginContent() {
             </div>
           )}
 
-          {/* Social login option */}
+          {/* Social login option only */}
           <div className="space-y-4">
             <button
               onClick={handleGoogleLogin}
               type="button"
-              className="flex w-full items-center justify-center gap-3 rounded-xl border border-zinc-800 bg-zinc-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:border-zinc-700 hover:bg-zinc-850 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/5 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-500"
+              className="flex w-full items-center justify-center gap-3 rounded-xl border border-indigo-500 bg-indigo-600 px-4 py-3.5 text-xs font-bold uppercase tracking-widest text-white shadow-sm transition-all duration-300 hover:bg-indigo-500 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-indigo-500/20 cursor-pointer"
             >
               <svg className="h-5 w-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path
@@ -66,6 +68,15 @@ function LoginContent() {
             </button>
           </div>
 
+          {/* Email login/signup forms temporarily disabled but preserved structurally below */}
+          {/*
+          <form className="hidden space-y-4">
+            <input type="email" placeholder="Email" />
+            <input type="password" placeholder="Password" />
+            <button type="submit">Sign In</button>
+          </form>
+          */}
+
           <div className="mt-8 border-t border-zinc-800/80 pt-6 text-center text-xs text-zinc-500">
             <span>By clicking Continue, you agree to ShopSphere&apos;s </span>
             <a href="#" className="font-semibold text-zinc-400 hover:text-indigo-400 transition-colors">Terms of Service</a>
@@ -74,10 +85,9 @@ function LoginContent() {
             <span>.</span>
           </div>
 
-          <div className="mt-4 text-center text-sm text-zinc-400">
-            <span>New to ShopSphere? </span>
-            <Link href="/register" className="font-semibold text-indigo-400 hover:text-indigo-300 transition-colors">
-              Create an account
+          <div className="mt-4 text-center text-xs text-zinc-500">
+            <Link href="/portal" className="hover:text-indigo-400 transition-colors">
+              ← Choose another experience path
             </Link>
           </div>
         </div>

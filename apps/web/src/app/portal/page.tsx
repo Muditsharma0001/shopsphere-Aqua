@@ -13,7 +13,7 @@ const portalCards = [
     desc: 'Purchase premium water bottles. Track orders. Manage profile. Wishlist. Rewards. AI Shopping Assistant.',
     tags: ['Storefront', 'Orders', 'Wishlist', 'Rewards', 'AI Shopping Assistant'],
     btnLabel: 'Continue as Customer',
-    href: '/',
+    href: '/login?role=CUSTOMER',
   },
   {
     id: 'business',
@@ -22,7 +22,7 @@ const portalCards = [
     desc: 'Manage the entire business. Products. Orders. Customers. Website. Analytics. Marketing. Inventory.',
     tags: ['Business OS', 'Product Studio', 'Website Builder', 'CRM', 'Finance', 'Security'],
     btnLabel: 'Continue as Business Owner',
-    href: '/business/login',
+    href: '/business/login?role=BUSINESS_OWNER',
   },
 ];
 

@@ -93,29 +93,29 @@ export default function Dashboard() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       
       // 1. Fetch Profile
-      const profRes = await fetch(`${apiUrl}/api/profile`);
+      const profRes = await fetch(`${apiUrl}/api/profile`, { credentials: 'include' });
       const profData = await profRes.json();
       if (profData.success) setProfile(profData.data);
 
       // 2. Fetch Orders
       if (profData.success && profData.data) {
-        const ordRes = await fetch(`${apiUrl}/api/orders?userId=${profData.data.id}`);
+        const ordRes = await fetch(`${apiUrl}/api/orders?userId=${profData.data.id}`, { credentials: 'include' });
         const ordData = await ordRes.json();
         if (ordData.success) setOrders(ordData.data);
       }
 
       // 3. Fetch Addresses
-      const addrRes = await fetch(`${apiUrl}/api/addresses`);
+      const addrRes = await fetch(`${apiUrl}/api/addresses`, { credentials: 'include' });
       const addrData = await addrRes.json();
       if (addrData.success) setAddresses(addrData.data);
 
       // 4. Fetch Notifications
-      const notifRes = await fetch(`${apiUrl}/api/notifications`);
+      const notifRes = await fetch(`${apiUrl}/api/notifications`, { credentials: 'include' });
       const notifData = await notifRes.json();
       if (notifData.success) setNotifications(notifData.data);
 
       // 5. Fetch Warranties
-      const warRes = await fetch(`${apiUrl}/api/warranty`);
+      const warRes = await fetch(`${apiUrl}/api/warranty`, { credentials: 'include' });
       const warData = await warRes.json();
       if (warData.success) setWarranties(warData.data);
 
@@ -139,6 +139,7 @@ export default function Dashboard() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(profile),
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success) {
@@ -163,6 +164,7 @@ export default function Dashboard() {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editAddress),
+        credentials: 'include',
       });
 
       const data = await res.json();
@@ -183,6 +185,7 @@ export default function Dashboard() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       const res = await fetch(`${apiUrl}/api/addresses/${addrId}`, {
         method: 'DELETE',
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success) {
@@ -201,6 +204,7 @@ export default function Dashboard() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success) {
@@ -224,6 +228,7 @@ export default function Dashboard() {
           serialNumber: warrantySerial,
           productModel: warrantyModel,
         }),
+        credentials: 'include',
       });
       const data = await res.json();
       if (data.success) {
