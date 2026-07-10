@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import ScrollFoundation from '../../../components/ScrollFoundation';
 import Navbar from '../../../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -50,11 +50,28 @@ export default function BusinessProductsShelf() {
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterStock, setFilterStock] = useState<string>('all'); // all, low, out
 
-  // Editing Side Drawer Overlay
+  // Overlays
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showCreateDrawer, setShowCreateDrawer] = useState(false);
+  const [deleteConfirmProd, setDeleteConfirmProd] = useState<Product | null>(null);
+  const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [viewingAnalyticsProd, setViewingAnalyticsProd] = useState<Product | null>(null);
+  const [viewingInventoryProd, setViewingInventoryProd] = useState<Product | null>(null);
+
+  // Create Form States
+  const [newName, setNewName] = useState('');
+  const [newPrice, setNewPrice] = useState('');
+  const [newStock, setNewStock] = useState('');
+  const [newCategory, setNewCategory] = useState('Smart Bottles');
+  const [newDesc, setNewDesc] = useState('');
+  const [newImageUrl, setNewImageUrl] = useState('');
+
+  // Edit Form States
   const [editName, setEditName] = useState('');
   const [editPrice, setEditPrice] = useState(0);
   const [editStock, setEditStock] = useState(0);
+  const [editCategory, setEditCategory] = useState('');
+  const [editDesc, setEditDesc] = useState('');
   const [editStatus, setEditStatus] = useState<'Published' | 'Draft' | 'Archived'>('Published');
 
   const triggerToast = (msg: string) => {
@@ -93,7 +110,7 @@ export default function BusinessProductsShelf() {
     fetchProducts();
   }, []);
 
-  // Live Suggestions logic
+  // Suggestions
   useEffect(() => {
     if (!searchQuery) {
       setSuggestions([]);
@@ -106,7 +123,96 @@ export default function BusinessProductsShelf() {
     setSuggestions(filtered);
   }, [searchQuery, products]);
 
-  // Bulk operations handler
+  // Create Product in DB
+  const handleCreateProduct = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/business/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newName,
+          price: parseFloat(newPrice),
+          stock: parseInt(newStock) || 0,
+          categoryName: newCategory,
+          description: newDesc,
+          imageUrls: newImageUrl ? [newImageUrl] : ['https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80']
+        }),
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        triggerToast(`Product "${newName}" successfully created in PostgreSQL!`);
+        setShowCreateDrawer(false);
+        // Reset inputs
+        setNewName('');
+        setNewPrice('');
+        setNewStock('');
+        setNewDesc('');
+        setNewImageUrl('');
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Edit Product in DB
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProduct) return;
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/business/products/${editingProduct.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          price: editPrice,
+          stock: editStock,
+          description: editDesc,
+          categoryName: editCategory,
+          status: editStatus,
+        }),
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        triggerToast('Product details saved to PostgreSQL!');
+        setEditingProduct(null);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Duplicate Product in DB
+  const handleDuplicate = async (prod: Product) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      const res = await fetch(`${apiUrl}/api/business/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: `${prod.name} (Copy)`,
+          price: prod.price,
+          stock: prod.stock,
+          categoryName: prod.category,
+          description: prod.description,
+          imageUrls: prod.images,
+        }),
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        triggerToast(`Duplicated "${prod.name}" successfully.`);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // Bulk actions handler
   const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete') => {
     if (selectedIds.length === 0) return;
     try {
@@ -127,22 +233,24 @@ export default function BusinessProductsShelf() {
     }
   };
 
-  // Single Actions
-  const handleSingleDelete = async (id: string) => {
+  // Delete product with confirmation modal
+  const handleExecuteDelete = async () => {
+    if (!deleteConfirmProd) return;
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       const res = await fetch(`${apiUrl}/api/business/products/bulk-delete`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: [id] }),
+        body: JSON.stringify({ ids: [deleteConfirmProd.id] }),
       });
       const resData = await res.json();
       if (resData.success) {
-        triggerToast('Product deleted successfully.');
+        triggerToast('Product deleted from database and storefront.');
+        setDeleteConfirmProd(null);
         fetchProducts();
       }
     } catch (err) {
-      console.error('Single delete error:', err);
+      console.error(err);
     }
   };
 
@@ -157,7 +265,7 @@ export default function BusinessProductsShelf() {
       });
       const resData = await res.json();
       if (resData.success) {
-        triggerToast(`Product ${action}ed successfully.`);
+        triggerToast(`Product is now ${action}ed.`);
         fetchProducts();
       }
     } catch (err) {
@@ -165,46 +273,14 @@ export default function BusinessProductsShelf() {
     }
   };
 
-  const handleEditSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!editingProduct) return;
-    try {
-      // Mock integration updating local state instantly to prove responsiveness
-      setProducts(
-        products.map((p) =>
-          p.id === editingProduct.id
-            ? { ...p, name: editName, price: editPrice, stock: editStock, status: editStatus }
-            : p
-        )
-      );
-      triggerToast('Product details saved successfully.');
-      setEditingProduct(null);
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const handleDuplicate = (prod: Product) => {
-    const duplicated: Product = {
-      ...prod,
-      id: `copy-${Date.now()}`,
-      name: `${prod.name} (Copy)`,
-      sku: `${prod.sku}-COPY`,
-      createdAt: new Date().toISOString(),
-    };
-    setProducts([duplicated, ...products]);
-    triggerToast(`Duplicated "${prod.name}"`);
-  };
-
   // Processing metrics calculation
   const totalProducts = products.length;
   const publishedProducts = products.filter((p) => p.status === 'Published').length;
   const draftProducts = products.filter((p) => p.status === 'Draft').length;
+  const archivedProducts = products.filter((p) => p.status === 'Archived').length;
   const outOfStock = products.filter((p) => p.stock === 0).length;
   const lowStock = products.filter((p) => p.stock > 0 && p.stock <= 10).length;
-  const totalInventoryVal = products.reduce((sum, p) => sum + p.price * p.stock, 0);
 
-  // Sorting & Filtering logic applied dynamically
   const categoriesList = Array.from(new Set(products.map((p) => p.category)));
 
   const filteredProducts = products
@@ -229,37 +305,11 @@ export default function BusinessProductsShelf() {
       else if (sortBy === 'stock') comparison = a.stock - b.stock;
       else if (sortBy === 'sales') comparison = a.totalSales - b.totalSales;
       else if (sortBy === 'rating') comparison = a.rating - b.rating;
+      else if (sortBy === 'newest') comparison = new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      else if (sortBy === 'oldest') comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
 
       return sortOrder === 'asc' ? comparison : -comparison;
     });
-
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-[#030304] flex items-center justify-center">
-        <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-500 to-pink-500 animate-pulse">
-          <span className="text-2xl font-black text-white">S</span>
-        </div>
-      </div>
-    );
-  }
-
-  if (forbidden) {
-    return (
-      <div className="min-h-screen bg-[#030304] flex flex-col items-center justify-center px-6 text-center">
-        <span className="text-5xl filter drop-shadow-[0_0_8px_rgba(239,68,68,0.3)]">🔒</span>
-        <h1 className="text-3xl font-black tracking-tight text-white mt-6 uppercase">403 Forbidden Access</h1>
-        <p className="text-xs text-zinc-500 mt-2 max-w-sm">
-          Your credentials do not contain authorization to manage the Business Operating System.
-        </p>
-        <button
-          onClick={() => window.location.href = '/portal'}
-          className="mt-8 px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[9px] uppercase tracking-widest transition-all"
-        >
-          Return to Portal Gateway
-        </button>
-      </div>
-    );
-  }
 
   return (
     <ScrollFoundation>
@@ -282,14 +332,14 @@ export default function BusinessProductsShelf() {
         </AnimatePresence>
 
         {/* Sidebar Nav */}
-        <div className="w-64 border-r border-zinc-900 bg-zinc-950/20 p-6 space-y-8 shrink-0 min-h-screen pt-36">
+        <div className="w-64 border-r border-zinc-900 bg-zinc-950/20 p-6 space-y-8 shrink-0 min-h-screen pt-36 animate-fadeIn">
           <div className="space-y-4">
             <span className="block text-[8px] font-bold text-zinc-600 uppercase tracking-widest px-4">Workspace</span>
             <Link href="/business/dashboard" className="w-full px-4 py-2.5 rounded-xl text-left text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-3 text-zinc-500 hover:text-white hover:bg-zinc-900/30">
               📊 Corporate OS
             </Link>
             <Link href="/business/products" className="w-full px-4 py-2.5 rounded-xl text-left text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-3 bg-indigo-600 text-white shadow-lg shadow-indigo-500/10">
-              🛍️ Product Shelf
+              📦 Product Library
             </Link>
           </div>
         </div>
@@ -302,19 +352,18 @@ export default function BusinessProductsShelf() {
             {/* Header info */}
             <div>
               <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em]">Product Library</span>
-              <h1 className="text-3xl font-black text-white mt-2 tracking-tight uppercase">Corporate Product Shelf</h1>
+              <h1 className="text-3xl font-black text-white mt-2 tracking-tight uppercase">Corporate Product Library</h1>
             </div>
 
-            {/* Statistics Widgets */}
-            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+            {/* Statistics Summary Widgets */}
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               {[
-                { label: 'Total Models', count: totalProducts, icon: '🛍️' },
+                { label: 'Total Products', count: totalProducts, icon: '📦' },
                 { label: 'Published', count: publishedProducts, icon: '🟢' },
                 { label: 'Drafts', count: draftProducts, icon: '🟡' },
+                { label: 'Archived', count: archivedProducts, icon: '🗂️' },
                 { label: 'Out of Stock', count: outOfStock, icon: '🔴', alert: outOfStock > 0 },
                 { label: 'Low Stock', count: lowStock, icon: '⚠️', alert: lowStock > 0 },
-                { label: 'Best Sellers', count: products.filter((p) => p.totalSales > 150).length, icon: '🔥' },
-                { label: 'Total Value', count: `$${totalInventoryVal.toLocaleString()}`, icon: '💰' },
               ].map((stat, i) => (
                 <div key={i} className="p-4 rounded-xl border border-zinc-900 bg-zinc-950 flex flex-col justify-between min-h-[90px]">
                   <span className="text-lg">{stat.icon}</span>
@@ -329,7 +378,7 @@ export default function BusinessProductsShelf() {
             {/* Filters Toolbar */}
             <div className="p-4 rounded-2xl border border-zinc-900 bg-zinc-950/40 flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4">
               
-              {/* Search input with live suggestion drop down */}
+              {/* Search with suggestions dropdown */}
               <div className="relative flex-1 max-w-sm">
                 <input
                   type="text"
@@ -356,7 +405,7 @@ export default function BusinessProductsShelf() {
                 )}
               </div>
 
-              {/* Toggles and selects */}
+              {/* View options selectors */}
               <div className="flex flex-wrap items-center gap-3">
                 <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-[10px] text-zinc-400 focus:outline-none font-bold uppercase tracking-wider">
                   <option value="all">Categories (All)</option>
@@ -384,6 +433,8 @@ export default function BusinessProductsShelf() {
                   <option value="stock">Sort by Stock</option>
                   <option value="sales">Sort by Sales</option>
                   <option value="rating">Sort by Rating</option>
+                  <option value="newest">Sort by Newest</option>
+                  <option value="oldest">Sort by Oldest</option>
                 </select>
 
                 <button
@@ -394,7 +445,7 @@ export default function BusinessProductsShelf() {
                   {sortOrder === 'asc' ? '▲' : '▼'}
                 </button>
 
-                {/* View Mode Toggle */}
+                {/* Switcher toggle */}
                 <div className="flex bg-zinc-950 border border-zinc-900 rounded-xl p-1 shrink-0">
                   {['grid', 'list', 'table'].map((m) => (
                     <button
@@ -412,7 +463,7 @@ export default function BusinessProductsShelf() {
 
             </div>
 
-            {/* Checkbox Select All indicator */}
+            {/* Selection indicators */}
             {filteredProducts.length > 0 && (
               <div className="flex items-center gap-3 px-3">
                 <input
@@ -428,7 +479,7 @@ export default function BusinessProductsShelf() {
               </div>
             )}
 
-            {/* Layout viewer viewport */}
+            {/* Layout viewports */}
             {filteredProducts.length === 0 ? (
               <div className="p-12 text-center border border-zinc-900 rounded-3xl bg-zinc-950/20">
                 <span className="text-3xl block">🔍</span>
@@ -443,9 +494,8 @@ export default function BusinessProductsShelf() {
                       <motion.div
                         key={prod.id}
                         layout
-                        className="rounded-2xl border border-zinc-900 bg-zinc-950/40 p-5 flex flex-col justify-between min-h-[360px] group relative hover:border-indigo-500/30 transition-all duration-300"
+                        className="rounded-2xl border border-zinc-900 bg-zinc-950/40 p-5 flex flex-col justify-between min-h-[440px] group relative hover:border-indigo-500/30 transition-all duration-300 shadow-xl"
                       >
-                        {/* Checkbox selection indicator */}
                         <div className="absolute top-4 left-4 z-30">
                           <input
                             type="checkbox"
@@ -459,7 +509,7 @@ export default function BusinessProductsShelf() {
                         </div>
 
                         <div className="space-y-4">
-                          {/* Image preview */}
+                          {/* Image box */}
                           <div className="h-40 rounded-xl bg-zinc-950 border border-zinc-900 overflow-hidden relative">
                             {prod.images[0] ? (
                               <img src={prod.images[0]} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -473,45 +523,76 @@ export default function BusinessProductsShelf() {
                             </span>
                           </div>
 
-                          {/* Details */}
+                          {/* Product Details */}
                           <div className="space-y-1">
                             <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold block">{prod.sku} &bull; {prod.category}</span>
                             <h3 className="font-black text-white text-xs uppercase tracking-wider truncate">{prod.name}</h3>
-                            <span className="block font-mono text-xs font-bold text-white">${prod.price.toFixed(2)}</span>
+                            <p className="text-zinc-500 text-[8px] line-clamp-2 mt-1">{prod.description || 'No description provided.'}</p>
+                            
+                            <div className="flex justify-between items-center pt-2 text-[9px] text-zinc-400 font-mono">
+                              <span>Price: <span className="text-white font-bold">${prod.price.toFixed(2)}</span></span>
+                              <span>Stock: <span className={prod.stock === 0 ? 'text-red-400' : 'text-white'}>{prod.stock}</span></span>
+                            </div>
                           </div>
                         </div>
 
-                        {/* Actions lists */}
-                        <div className="border-t border-zinc-900 pt-4 mt-4 grid grid-cols-2 gap-2 text-[9px] font-bold uppercase tracking-wider">
+                        {/* Complete Quick Actions List */}
+                        <div className="border-t border-zinc-900 pt-4 mt-4 grid grid-cols-3 gap-1.5 text-[8px] font-bold uppercase tracking-wider text-center">
                           <button
                             onClick={() => {
                               setEditingProduct(prod);
                               setEditName(prod.name);
                               setEditPrice(prod.price);
                               setEditStock(prod.stock);
+                              setEditCategory(prod.category);
+                              setEditDesc(prod.description);
                               setEditStatus(prod.status);
                             }}
-                            className="py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:text-white text-zinc-400 transition-colors cursor-pointer text-center"
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
-                            Edit
+                            ✏ Edit
                           </button>
+                          
                           <button
-                            onClick={() => handleSinglePublishToggle(prod.id, prod.status)}
-                            className="py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:text-white text-zinc-400 transition-colors cursor-pointer text-center"
+                            onClick={() => setPreviewProduct(prod)}
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
-                            {prod.status === 'Published' ? 'Unpublish' : 'Publish'}
+                            👁 Preview
                           </button>
+
+                          <button
+                            onClick={() => setViewingAnalyticsProd(prod)}
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          >
+                            📊 Analytics
+                          </button>
+
+                          <button
+                            onClick={() => setViewingInventoryProd(prod)}
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          >
+                            📦 Inventory
+                          </button>
+
                           <button
                             onClick={() => handleDuplicate(prod)}
-                            className="py-2 rounded-lg bg-zinc-900 border border-zinc-800 hover:bg-zinc-850 hover:text-white text-zinc-400 transition-colors cursor-pointer text-center"
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
-                            Duplicate
+                            📄 Dupe
                           </button>
+
                           <button
-                            onClick={() => handleSingleDelete(prod.id)}
-                            className="py-2 rounded-lg border border-red-500/25 text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer text-center"
+                            onClick={() => handleSinglePublishToggle(prod.id, prod.status)}
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
-                            Delete
+                            {prod.status === 'Published' ? '📥 Unpub' : '📤 Pub'}
+                          </button>
+
+                          <button
+                            onClick={() => setDeleteConfirmProd(prod)}
+                            className="py-2 rounded border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer col-span-3 mt-1"
+                          >
+                            🗑 Delete Product
                           </button>
                         </div>
                       </motion.div>
@@ -543,11 +624,13 @@ export default function BusinessProductsShelf() {
                           </div>
                           <div>
                             <h4 className="font-bold text-white uppercase text-xs truncate max-w-xs">{prod.name}</h4>
-                            <span className="block text-[8px] text-zinc-500 mt-1 font-mono">{prod.sku} &bull; {prod.category} &bull; Stock: {prod.stock}</span>
+                            <span className="block text-[8px] text-zinc-500 mt-1 font-mono">
+                              SKU: {prod.sku} &bull; Category: {prod.category} &bull; Rating: ★{prod.rating.toFixed(1)} &bull; Sales: {prod.totalSales}
+                            </span>
                           </div>
                         </div>
 
-                        <div className="flex items-center gap-4 justify-between sm:justify-end w-full sm:w-auto">
+                        <div className="flex items-center gap-3 justify-between sm:justify-end w-full sm:w-auto">
                           <span className="font-mono font-bold text-white text-xs">${prod.price.toFixed(2)}</span>
                           <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${
                             prod.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
@@ -555,10 +638,24 @@ export default function BusinessProductsShelf() {
                             {prod.status}
                           </span>
                           <button
-                            onClick={() => handleSinglePublishToggle(prod.id, prod.status)}
-                            className="px-3 py-1.5 rounded-lg border border-zinc-800 text-[8px] font-bold uppercase tracking-wider hover:bg-zinc-900 text-zinc-400 cursor-pointer"
+                            onClick={() => {
+                              setEditingProduct(prod);
+                              setEditName(prod.name);
+                              setEditPrice(prod.price);
+                              setEditStock(prod.stock);
+                              setEditCategory(prod.category);
+                              setEditDesc(prod.description);
+                              setEditStatus(prod.status);
+                            }}
+                            className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-[8px] font-bold uppercase hover:bg-zinc-800 text-zinc-300 cursor-pointer"
                           >
-                            Toggle Status
+                            ✏ Edit
+                          </button>
+                          <button
+                            onClick={() => setDeleteConfirmProd(prod)}
+                            className="px-3 py-1.5 rounded border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 cursor-pointer text-[8px] font-bold uppercase"
+                          >
+                            🗑 Delete
                           </button>
                         </div>
                       </motion.div>
@@ -581,6 +678,7 @@ export default function BusinessProductsShelf() {
                           <th className="px-6 py-4">Sales</th>
                           <th className="px-6 py-4">Rating</th>
                           <th className="px-6 py-4">Status</th>
+                          <th className="px-6 py-4">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-zinc-900">
@@ -611,6 +709,12 @@ export default function BusinessProductsShelf() {
                                 {prod.status}
                               </span>
                             </td>
+                            <td className="px-6 py-3.5">
+                              <div className="flex gap-2">
+                                <button onClick={() => setPreviewProduct(prod)} className="hover:text-white">👁 Preview</button>
+                                <button onClick={() => setDeleteConfirmProd(prod)} className="text-red-400 hover:text-red-300">🗑 Delete</button>
+                              </div>
+                            </td>
                           </tr>
                         ))}
                       </tbody>
@@ -623,14 +727,49 @@ export default function BusinessProductsShelf() {
           </div>
         </div>
 
-        {/* Bulk Actions sliding drawer footer */}
+        {/* Floating Action Button "Add Product" */}
+        <button
+          onClick={() => setShowCreateDrawer(true)}
+          className="fixed bottom-6 right-6 h-12 w-12 rounded-full bg-indigo-600 hover:bg-indigo-500 text-white flex items-center justify-center text-xl shadow-2xl cursor-pointer hover:scale-105 active:scale-95 transition-all z-40 border border-indigo-400/20"
+          title="Add New Product"
+        >
+          ➕
+        </button>
+
+        {/* Custom Confirmation Modal Dialog */}
+        <AnimatePresence>
+          {deleteConfirmProd && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setDeleteConfirmProd(null)} className="absolute inset-0 bg-black/70 backdrop-blur-sm" />
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md rounded-2xl border border-zinc-900 bg-zinc-950 p-6 text-center space-y-6 shadow-2xl z-10">
+                <span className="text-4xl block">⚠️</span>
+                <div className="space-y-2">
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">Confirm Catalog Deletion</h3>
+                  <p className="text-xs text-zinc-400 leading-relaxed">
+                    Are you sure you want to permanently delete this product?
+                  </p>
+                </div>
+                <div className="flex gap-3">
+                  <button onClick={handleExecuteDelete} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[9px] uppercase tracking-widest cursor-pointer">
+                    Delete Product
+                  </button>
+                  <button onClick={() => setDeleteConfirmProd(null)} className="flex-1 py-3 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300 font-bold text-[9px] uppercase tracking-widest cursor-pointer">
+                    Cancel
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Bulk Actions Sliding Drawer */}
         <AnimatePresence>
           {selectedIds.length > 0 && (
             <motion.div
               initial={{ y: 100, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               exit={{ y: 100, opacity: 0 }}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 rounded-2xl border border-indigo-500/30 bg-zinc-950/90 backdrop-blur px-6 py-4 flex items-center gap-6 shadow-2xl"
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-indigo-500/30 bg-zinc-950/90 backdrop-blur px-6 py-4 flex items-center gap-6 shadow-2xl"
             >
               <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase">
                 Selected: <span className="text-white font-black">{selectedIds.length} items</span>
@@ -646,26 +785,15 @@ export default function BusinessProductsShelf() {
           )}
         </AnimatePresence>
 
-        {/* Edit side drawer overlay */}
+        {/* Edit Drawer Overlay */}
         <AnimatePresence>
           {editingProduct && (
-            <div className="fixed inset-0 z-50 flex justify-end">
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                onClick={() => setEditingProduct(null)}
-                className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-              />
-              <motion.div
-                initial={{ x: 400 }}
-                animate={{ x: 0 }}
-                exit={{ x: 400 }}
-                className="w-96 bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto"
-              >
+            <div className="fixed inset-0 z-50 flex justify-end animate-fadeIn">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingProduct(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <motion.div initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="w-96 bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
                 <div>
                   <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.2em]">Product Studio Overlay</span>
-                  <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">Edit catalog details</h3>
+                  <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">Edit Product Catalog</h3>
                 </div>
 
                 <form onSubmit={handleEditSubmit} className="space-y-4">
@@ -674,12 +802,20 @@ export default function BusinessProductsShelf() {
                     <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
                   </div>
                   <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Category</label>
+                    <input type="text" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                  </div>
+                  <div className="space-y-1.5">
                     <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Catalog Price ($)</label>
                     <input type="number" step="0.01" value={editPrice} onChange={(e) => setEditPrice(parseFloat(e.target.value))} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Warehouse Stock</label>
                     <input type="number" value={editStock} onChange={(e) => setEditStock(parseInt(e.target.value))} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Description</label>
+                    <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="w-full h-20 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none" />
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Status</label>
@@ -695,6 +831,145 @@ export default function BusinessProductsShelf() {
                     <button type="button" onClick={() => setEditingProduct(null)} className="flex-1 py-3 border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300 rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Cancel</button>
                   </div>
                 </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Add Product Drawer Overlay (Product Studio Component) */}
+        <AnimatePresence>
+          {showCreateDrawer && (
+            <div className="fixed inset-0 z-50 flex justify-end">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateDrawer(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
+              <motion.div initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="w-96 bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
+                <div>
+                  <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.2em]">Product Studio Panel</span>
+                  <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">Add New Product</h3>
+                </div>
+
+                <form onSubmit={handleCreateProduct} className="space-y-4">
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Name</label>
+                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Smart Bottle XL" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Category</label>
+                    <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Price ($)</label>
+                    <input type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="89.99" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Starting Stock</label>
+                    <input type="number" value={newStock} onChange={(e) => setNewStock(e.target.value)} placeholder="150" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Image URL</label>
+                    <input type="url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://..." className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Description</label>
+                    <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Enter detailed product description..." className="w-full h-24 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none" />
+                  </div>
+
+                  <div className="pt-4 flex gap-2">
+                    <button type="submit" className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Create Product</button>
+                    <button type="button" onClick={() => setShowCreateDrawer(false)} className="flex-1 py-3 border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300 rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Cancel</button>
+                  </div>
+                </form>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Live Storefront Mock Preview Modal */}
+        <AnimatePresence>
+          {previewProduct && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setPreviewProduct(null)} className="absolute inset-0 bg-black/80 backdrop-blur-sm" />
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-2xl rounded-2xl border border-zinc-900 bg-zinc-950 p-8 shadow-2xl z-10 flex flex-col md:flex-row gap-6 max-h-[90vh] overflow-y-auto">
+                <button onClick={() => setPreviewProduct(null)} className="absolute top-4 right-4 text-zinc-500 hover:text-white cursor-pointer">✕</button>
+                
+                <div className="flex-1 h-64 rounded-xl bg-zinc-900 border border-zinc-850 overflow-hidden shrink-0">
+                  {previewProduct.images[0] ? (
+                    <img src={previewProduct.images[0]} alt={previewProduct.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-3xl">🛍️</div>
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-4 text-left">
+                  <span className="text-[8px] text-zinc-500 font-mono tracking-widest uppercase block">{previewProduct.sku} &bull; {previewProduct.category}</span>
+                  <h3 className="text-lg font-black text-white uppercase tracking-wider">{previewProduct.name}</h3>
+                  <p className="text-zinc-400 text-xs leading-relaxed">{previewProduct.description || 'No description provided.'}</p>
+                  
+                  <div className="flex items-center gap-3">
+                    <span className="text-lg font-bold text-white">${previewProduct.price.toFixed(2)}</span>
+                    <span className="px-2 py-0.5 rounded text-[8px] font-bold uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
+                      ★ {previewProduct.rating.toFixed(1)} ({previewProduct.totalSales} sales)
+                    </span>
+                  </div>
+
+                  <div className="pt-4 border-t border-zinc-900 text-[9px] text-zinc-500 uppercase tracking-wider space-y-1">
+                    <div>Brand: <span className="text-zinc-300 font-bold">{previewProduct.brand}</span></div>
+                    <div>Stock status: <span className={previewProduct.stock === 0 ? 'text-red-400 font-bold' : 'text-zinc-300 font-bold'}>{previewProduct.stock} units available</span></div>
+                    <div>Status: <span className="text-zinc-300 font-bold">{previewProduct.status}</span></div>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Mock Analytics Modal */}
+        <AnimatePresence>
+          {viewingAnalyticsProd && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setViewingAnalyticsProd(null)} className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md rounded-2xl border border-zinc-900 bg-zinc-950 p-6 shadow-2xl z-10 text-center space-y-6">
+                <span className="text-3xl block">📊</span>
+                <div className="space-y-1">
+                  <span className="text-[8px] text-zinc-500 font-mono tracking-widest uppercase block">{viewingAnalyticsProd.sku}</span>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">{viewingAnalyticsProd.name}</h3>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-850">
+                    <span className="text-[8px] text-zinc-500 uppercase block font-bold">Total Sales Volume</span>
+                    <span className="text-sm font-mono font-bold text-white mt-1 block">{viewingAnalyticsProd.totalSales} Units</span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-850">
+                    <span className="text-[8px] text-zinc-500 uppercase block font-bold">Gross Revenue</span>
+                    <span className="text-sm font-mono font-bold text-emerald-400 mt-1 block">${(viewingAnalyticsProd.totalSales * viewingAnalyticsProd.price).toLocaleString()}</span>
+                  </div>
+                </div>
+                <button onClick={() => setViewingAnalyticsProd(null)} className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[8px] uppercase tracking-widest cursor-pointer">
+                  Close Analytics
+                </button>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Mock Inventory Modal */}
+        <AnimatePresence>
+          {viewingInventoryProd && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setViewingInventoryProd(null)} className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-md rounded-2xl border border-zinc-900 bg-zinc-950 p-6 shadow-2xl z-10 text-center space-y-6">
+                <span className="text-3xl block">📦</span>
+                <div className="space-y-1">
+                  <span className="text-[8px] text-zinc-500 font-mono tracking-widest uppercase block">{viewingInventoryProd.sku}</span>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">{viewingInventoryProd.name}</h3>
+                </div>
+                <div className="p-5 rounded-xl bg-zinc-900 border border-zinc-850 text-left space-y-3 text-[10px] text-zinc-400">
+                  <div className="flex justify-between"><span>Central Jersey Depot:</span><span className="text-white font-bold">{Math.floor(viewingInventoryProd.stock * 0.6)} Units</span></div>
+                  <div className="flex justify-between"><span>West Oakland Depot:</span><span className="text-white font-bold">{Math.floor(viewingInventoryProd.stock * 0.4)} Units</span></div>
+                  <div className="flex justify-between border-t border-zinc-800 pt-2 text-white font-bold"><span>Total On Hand:</span><span>{viewingInventoryProd.stock} Units</span></div>
+                </div>
+                <button onClick={() => setViewingInventoryProd(null)} className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[8px] uppercase tracking-widest cursor-pointer">
+                  Close Inventory
+                </button>
               </motion.div>
             </div>
           )}

@@ -190,4 +190,100 @@ router.post('/business/products/bulk-delete', async (req: Request, res: Response
   }
 });
 
+// POST /api/business/products - Create a new product in PostgreSQL
+router.post('/business/products', async (req: Request, res: Response) => {
+  try {
+    const { name, description, price, compareAtPrice, stock, categoryName, imageUrls } = req.body;
+
+    if (!name || !price || !categoryName) {
+      return res.status(400).json({ success: false, message: 'Name, price, and category are required.' });
+    }
+
+    const slug = `${name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${Date.now()}`;
+    
+    // Find or create category
+    let category = await prisma.category.findUnique({ where: { name: categoryName } });
+    if (!category) {
+      category = await prisma.category.create({
+        data: {
+          name: categoryName,
+          slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        },
+      });
+    }
+
+    // Default Brand
+    let brand = await prisma.brand.findFirst();
+    if (!brand) {
+      brand = await prisma.brand.create({
+        data: { name: 'Aqua', slug: 'aqua' },
+      });
+    }
+
+    const product = await prisma.product.create({
+      data: {
+        name,
+        slug,
+        description: description || '',
+        price: parseFloat(price),
+        compareAtPrice: compareAtPrice ? parseFloat(compareAtPrice) : null,
+        stock: parseInt(stock) || 0,
+        categoryId: category.id,
+        brandId: brand.id,
+        images: {
+          create: (imageUrls || []).map((url: string, idx: number) => ({
+            url,
+            isFeatured: idx === 0,
+          })),
+        },
+      },
+    });
+
+    res.status(201).json({ success: true, data: product });
+  } catch (error) {
+    console.error('Create business product error:', error);
+    res.status(500).json({ success: false, message: 'Server create product error.' });
+  }
+});
+
+// PUT /api/business/products/:id - Update product details in PostgreSQL
+router.put('/business/products/:id', async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    const { name, price, stock, status, description, categoryName } = req.body;
+
+    const data: any = {};
+    if (name) data.name = name;
+    if (price !== undefined) data.price = parseFloat(price);
+    if (stock !== undefined) data.stock = parseInt(stock);
+    if (description !== undefined) data.description = description;
+    if (status) {
+      data.isApproved = status === 'Published';
+    }
+
+    if (categoryName) {
+      let category = await prisma.category.findUnique({ where: { name: categoryName } });
+      if (!category) {
+        category = await prisma.category.create({
+          data: {
+            name: categoryName,
+            slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+          },
+        });
+      }
+      data.categoryId = category.id;
+    }
+
+    const product = await prisma.product.update({
+      where: { id },
+      data,
+    });
+
+    res.status(200).json({ success: true, data: product });
+  } catch (error) {
+    console.error('Update business product error:', error);
+    res.status(500).json({ success: false, message: 'Server update product error.' });
+  }
+});
+
 export default router;
