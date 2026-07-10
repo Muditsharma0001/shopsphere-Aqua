@@ -54,7 +54,7 @@ export default function BusinessDashboard() {
   const fetchBusinessData = async () => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      const profRes = await fetch(`${apiUrl}/api/profile`);
+      const profRes = await fetch(`${apiUrl}/api/profile`, { credentials: 'include' });
       const profData = await profRes.json();
       
       if (!profData.success || profData.data?.role !== 'BUSINESS_OWNER') {
@@ -63,7 +63,7 @@ export default function BusinessDashboard() {
         return;
       }
 
-      const busRes = await fetch(`${apiUrl}/api/business/dashboard`);
+      const busRes = await fetch(`${apiUrl}/api/business/dashboard`, { credentials: 'include' });
       const busData = await busRes.json();
       if (busData.success) {
         setData(busData.data);
@@ -97,6 +97,7 @@ export default function BusinessDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: `Generate description or marketing text for: ${aiPrompt}` }),
+        credentials: 'include',
       });
       const resData = await res.json();
       if (resData.success) {

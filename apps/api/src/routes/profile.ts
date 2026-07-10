@@ -1,10 +1,27 @@
 import { Router, Request, Response } from 'express';
+import jwt from 'jsonwebtoken';
 import prisma from '../prisma';
 
 const router = Router();
 
 // Helper to extract user or fallback to first user
 async function resolveUser(req: Request) {
+  // 1. Check accessToken cookie first
+  const token = req.cookies?.accessToken;
+  if (token) {
+    try {
+      const jwtSecret = process.env.JWT_SECRET || 'fallback_access_secret_key';
+      const decoded = jwt.verify(token, jwtSecret) as { id: string; email: string };
+      if (decoded && decoded.id) {
+        const user = await prisma.user.findUnique({ where: { id: decoded.id } });
+        if (user) return user;
+      }
+    } catch (err) {
+      console.error('[resolveUser cookie decoding error]:', err);
+    }
+  }
+
+  // 2. Check query/body parameters
   const userId = (req.query.userId as string) || (req.body.userId as string);
   
   if (userId) {

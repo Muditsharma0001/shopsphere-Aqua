@@ -93,7 +93,7 @@ export default function EnterpriseDashboard() {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       
       // 1. Verify Authentication & Role
-      const profRes = await fetch(`${apiUrl}/api/profile`);
+      const profRes = await fetch(`${apiUrl}/api/profile`, { credentials: 'include' });
       const profData = await profRes.json();
       
       if (!profData.success || profData.data?.role !== 'ENTERPRISE') {
@@ -103,7 +103,7 @@ export default function EnterpriseDashboard() {
       }
 
       // 2. Fetch Enterprise analytics
-      const entRes = await fetch(`${apiUrl}/api/enterprise/dashboard`);
+      const entRes = await fetch(`${apiUrl}/api/enterprise/dashboard`, { credentials: 'include' });
       const entData = await entRes.json();
       if (entData.success) {
         setData(entData.data);
