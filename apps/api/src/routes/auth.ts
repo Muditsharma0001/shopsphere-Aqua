@@ -301,6 +301,7 @@ router.get('/dev-login', async (req: Request, res: Response) => {
     if (roleParam === 'ADMIN') redirectPath = '/admin/dashboard';
     else if (roleParam === 'SELLER') redirectPath = '/seller/dashboard';
     else if (roleParam === 'ENTERPRISE') redirectPath = '/enterprise/dashboard';
+    else if (roleParam === 'BUSINESS_OWNER') redirectPath = '/business/dashboard';
 
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectPath}`);
   } catch (error) {

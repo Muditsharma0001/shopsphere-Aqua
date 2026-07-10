@@ -139,9 +139,9 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
 
           {/* Customer Dashboard Link */}
           <Link
-            href="/dashboard"
+            href="/portal"
             className="p-2 h-9 w-9 rounded-full border border-[var(--border-primary)] bg-[var(--bg-surface)] hover:bg-[var(--border-primary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-all text-xs flex items-center justify-center"
-            title="Customer Portal"
+            title="Choose Portal Experience"
           >
             👤
           </Link>

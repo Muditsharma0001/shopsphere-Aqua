@@ -12,6 +12,7 @@ enum Role {
   SELLER
   CUSTOMER
   ENTERPRISE
+  BUSINESS_OWNER
 }
 
 enum AuthProvider {
