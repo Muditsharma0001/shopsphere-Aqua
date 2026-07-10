@@ -19,17 +19,22 @@ enum AuthProvider {
 }
 
 model User {
-  id           String       @id @default(uuid())
-  email        String       @unique
-  passwordHash String?
-  name         String
-  role         Role         @default(CUSTOMER)
-  isVerified   Boolean      @default(false)
-  googleId     String?      @unique
-  avatarUrl    String?
-  provider     AuthProvider @default(LOCAL)
-  createdAt    DateTime     @default(now())
-  updatedAt    DateTime     @updatedAt
+  id              String       @id @default(uuid())
+  email           String       @unique
+  passwordHash    String?
+  name            String
+  role            Role         @default(CUSTOMER)
+  isVerified      Boolean      @default(false)
+  googleId        String?      @unique
+  avatarUrl       String?
+  provider        AuthProvider @default(LOCAL)
+  phone           String?
+  rewardPoints    Int          @default(150)
+  membershipLevel String       @default("SILVER")
+  isBanned        Boolean      @default(false)
+  isSuspended     Boolean      @default(false)
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
 
   @@map("users")
 }
@@ -69,6 +74,8 @@ model Product {
   brandId        String
   brand          Brand          @relation(fields: [brandId], references: [id], onDelete: Restrict)
   images         ProductImage[]
+  isApproved     Boolean        @default(true)
+  isFeatured     Boolean        @default(false)
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
@@ -84,4 +91,149 @@ model ProductImage {
   createdAt  DateTime @default(now())
 
   @@map("product_images")
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
+model Order {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique
+  userId          String?
+  customerName    String
+  customerEmail   String
+  customerPhone   String
+  shippingAddress String
+  shippingMethod  String
+  shippingCost    Float
+  gstCost         Float
+  discountCost    Float
+  subtotal        Float
+  grandTotal      Float
+  status          OrderStatus   @default(PENDING)
+  paymentStatus   PaymentStatus @default(PENDING)
+  razorpayOrderId String?       @unique
+  razorpayPaymentId String?     @unique
+  orderItems      OrderItem[]
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  productName  String
+  productPrice Float
+  quantity     Int
+  color        String
+  capacity     String
+  createdAt    DateTime @default(now())
+
+  @@map("order_items")
+}
+
+model Address {
+  id        String   @id @default(uuid())
+  userId    String
+  fullName  String
+  phone     String
+  email     String
+  country   String   @default("India")
+  state     String
+  city      String
+  zip       String
+  address   String
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("addresses")
+}
+
+model Warranty {
+  id             String   @id @default(uuid())
+  userId         String
+  serialNumber   String   @unique
+  purchaseDate   DateTime
+  activationDate DateTime @default(now())
+  status         String   @default("ACTIVE")
+  productModel   String   @default("Aqua Pro")
+  createdAt      DateTime @default(now())
+
+  @@map("warranties")
+}
+
+model Notification {
+  id        String   @id @default(uuid())
+  userId    String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  type      String   @default("INFO")
+  createdAt DateTime @default(now())
+
+  @@map("notifications")
+}
+
+model Coupon {
+  id              String    @id @default(uuid())
+  code            String    @unique
+  discountPercent Float
+  expiryDate      DateTime?
+  usageLimit      Int?
+  usedCount       Int       @default(0)
+  createdAt       DateTime  @default(now())
+
+  @@map("coupons")
+}
+
+model StoreSettings {
+  id             String   @id @default(uuid())
+  storeName      String   @default("ShopSphere Aqua")
+  storeLogo      String?
+  storeBanner    String?
+  description    String?
+  contactInfo    String?
+  shippingPolicy String?
+  returnPolicy   String?
+  updatedAt      DateTime @updatedAt
+
+  @@map("store_settings")
+}
+
+model CustomerMessage {
+  id          String   @id @default(uuid())
+  senderName  String
+  senderEmail String
+  subject     String
+  message     String
+  reply       String?
+  createdAt   DateTime @default(now())
+
+  @@map("customer_messages")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  action    String
+  userId    String?
+  details   String?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
 }

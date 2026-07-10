@@ -7,6 +7,7 @@
     "packages/*"
   ],
   "scripts": {
+    "dev": "concurrently \"npm run dev:web\" \"npm run dev:api\"",
     "dev:web": "npm run dev --workspace=@shopsphere/web",
     "dev:api": "npm run dev --workspace=@shopsphere/api",
     "build:web": "npm run build --workspace=@shopsphere/web",
@@ -16,7 +17,8 @@
     "typecheck": "tsc --build"
   },
   "devDependencies": {
-    "typescript": "^5.4.5",
-    "prettier": "^3.2.5"
+    "concurrently": "^10.0.3",
+    "prettier": "^3.2.5",
+    "typescript": "^5.4.5"
   }
 }

@@ -7,6 +7,11 @@ import { ApiResponse } from '@shopsphere/shared-types';
 
 import productsRouter from './routes/products';
 import authRouter from './routes/auth';
+import paymentRouter from './routes/payment';
+import profileRouter from './routes/profile';
+import sellerRouter from './routes/seller';
+import adminRouter from './routes/admin';
+import aiRouter from './routes/ai';
 
 dotenv.config();
 
@@ -27,6 +32,11 @@ app.use(cookieParser());
 // Routes
 app.use('/api/products', productsRouter);
 app.use('/auth', authRouter);
+app.use('/api', paymentRouter);
+app.use('/api', profileRouter);
+app.use('/api', sellerRouter);
+app.use('/api', adminRouter);
+app.use('/api', aiRouter);
 
 // Healthcheck
 app.get('/health', (req: Request, res: Response) => {
