@@ -13,10 +13,19 @@ import sellerRouter from './routes/seller';
 import adminRouter from './routes/admin';
 import aiRouter from './routes/ai';
 
+import rateLimit from 'express-rate-limit';
+
 dotenv.config();
 
 const app = express();
 const PORT = process.env.PORT || 5001;
+
+// Global API rate limiting
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 150,
+  message: { success: false, message: 'Too many requests from this IP address. Please try again after 15 minutes.' }
+});
 
 // Middlewares
 app.use(helmet());
@@ -28,6 +37,7 @@ app.use(
 );
 app.use(express.json());
 app.use(cookieParser());
+app.use('/api', limiter);
 
 // Routes
 app.use('/api/products', productsRouter);

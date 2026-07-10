@@ -15,8 +15,34 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "ShopSphere Aqua - Premium Hydration",
-  description: "Experience the convergence of computational thermal engineering and clean, fluid aesthetics.",
+  title: "HydraFlow Aqua - Premium Computational Hydration",
+  description: "Experience the convergence of computational thermal engineering, luxury double-wall insulation, and clean, fluid aesthetics.",
+  metadataBase: new URL("https://hydraflow-aqua.com"),
+  alternates: {
+    canonical: "/",
+  },
+  openGraph: {
+    title: "HydraFlow Aqua - Premium Computational Hydration",
+    description: "Double-wall copper vacuum insulation bottles for athletes, travelers, and design enthusiasts.",
+    url: "/",
+    siteName: "HydraFlow",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "HydraFlow Showcase",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "HydraFlow Aqua - Premium Hydration",
+    description: "Experience modern computational thermal containers with lifetime warranty coverage.",
+    images: ["/og-image.png"],
+  },
 };
 
 import MiniCart from "../components/MiniCart";
