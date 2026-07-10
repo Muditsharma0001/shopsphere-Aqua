@@ -317,7 +317,7 @@ export default function PremiumShowcase() {
       ctx.save();
       
       // Perspective Grid
-      ctx.strokeStyle = 'rgba(99, 102, 241, 0.04)';
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.15)';
       ctx.lineWidth = 1;
       const horizonY = height * 0.55;
       
@@ -343,25 +343,32 @@ export default function PremiumShowcase() {
       }
 
       // HUD Telemetry Spec Labels (Nothing Tech styling)
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
       ctx.font = '8px monospace';
       
       const timeStr = new Date().toISOString().substring(11, 19);
       
-      // Left side readouts
+      // Left side readouts with neon green status dot
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.8)'; // Neon Green
+      ctx.fillText('●', 32, height * 0.28);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
       ctx.fillText(`SYS.STATUS: ACTIVE // CLOCK: ${timeStr}`, 45, height * 0.28);
       ctx.fillText(`THERMAL_LINING: DOUBLE_WALL_COPPER`, 45, height * 0.28 + 15);
       ctx.fillText(`CONTAINER_PSI: 14.696`, 45, height * 0.28 + 30);
       ctx.fillText(`INSULATION: VACUUM_SHIELD_V4`, 45, height * 0.28 + 45);
       
-      // Right side readouts
+      // Right side readouts with neon green status dot
+      ctx.fillStyle = 'rgba(74, 222, 128, 0.8)'; // Neon Green
+      ctx.fillText('●', width - 213, height * 0.28);
+      
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
       ctx.fillText(`COGNITIVE_AQUA_ENGINE: ONLINE`, width - 200, height * 0.28);
       ctx.fillText(`FLUID_CAPACITY: 750ML // 25OZ`, width - 200, height * 0.28 + 15);
       ctx.fillText(`THERMO_RETENTION: 24H_COLD_12H_HOT`, width - 200, height * 0.28 + 30);
       ctx.fillText(`LOC.VECTOR: 37.7749 / -122.4194`, width - 200, height * 0.28 + 45);
 
       // Faint vector HUD circles
-      ctx.strokeStyle = 'rgba(168, 85, 247, 0.05)';
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.18)';
       ctx.beginPath();
       ctx.arc(80, height * 0.35, 45, 0, Math.PI * 2);
       ctx.stroke();
