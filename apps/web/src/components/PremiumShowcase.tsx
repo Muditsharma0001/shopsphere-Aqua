@@ -313,6 +313,65 @@ export default function PremiumShowcase() {
         }
       });
 
+      // 3.5 Draw Ambient Cybernetic HUD Telemetry & Perspective Grid (Behind Bottle)
+      ctx.save();
+      
+      // Perspective Grid
+      ctx.strokeStyle = 'rgba(99, 102, 241, 0.04)';
+      ctx.lineWidth = 1;
+      const horizonY = height * 0.55;
+      
+      // Grid lines
+      for (let i = 0; i < 15; i++) {
+        const ratio = i / 14;
+        const y = horizonY + (height - horizonY) * Math.pow(ratio, 2.5);
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(width, y);
+        ctx.stroke();
+      }
+      
+      // Ray lines
+      const vpX = width / 2;
+      const vpY = horizonY;
+      for (let i = -8; i <= 8; i++) {
+        const targetX = width / 2 + (i * (width / 12));
+        ctx.beginPath();
+        ctx.moveTo(vpX, vpY);
+        ctx.lineTo(targetX, height);
+        ctx.stroke();
+      }
+
+      // HUD Telemetry Spec Labels (Nothing Tech styling)
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.12)';
+      ctx.font = '8px monospace';
+      
+      const timeStr = new Date().toISOString().substring(11, 19);
+      
+      // Left side readouts
+      ctx.fillText(`SYS.STATUS: ACTIVE // CLOCK: ${timeStr}`, 45, height * 0.28);
+      ctx.fillText(`THERMAL_LINING: DOUBLE_WALL_COPPER`, 45, height * 0.28 + 15);
+      ctx.fillText(`CONTAINER_PSI: 14.696`, 45, height * 0.28 + 30);
+      ctx.fillText(`INSULATION: VACUUM_SHIELD_V4`, 45, height * 0.28 + 45);
+      
+      // Right side readouts
+      ctx.fillText(`COGNITIVE_AQUA_ENGINE: ONLINE`, width - 200, height * 0.28);
+      ctx.fillText(`FLUID_CAPACITY: 750ML // 25OZ`, width - 200, height * 0.28 + 15);
+      ctx.fillText(`THERMO_RETENTION: 24H_COLD_12H_HOT`, width - 200, height * 0.28 + 30);
+      ctx.fillText(`LOC.VECTOR: 37.7749 / -122.4194`, width - 200, height * 0.28 + 45);
+
+      // Faint vector HUD circles
+      ctx.strokeStyle = 'rgba(168, 85, 247, 0.05)';
+      ctx.beginPath();
+      ctx.arc(80, height * 0.35, 45, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.beginPath();
+      ctx.arc(width - 80, height * 0.35, 45, 0, Math.PI * 2);
+      ctx.stroke();
+      
+      ctx.restore();
+
       // 4. Draw Fullscreen Cinematic Centered Bottle Image Sequence (Cover mode)
       const currentFrame = Math.min(frameCount - 1, Math.max(0, Math.round(state.frame)));
       const bottleImg = imagesRef.current[currentFrame];
