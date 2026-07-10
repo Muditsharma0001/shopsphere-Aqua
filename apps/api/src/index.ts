@@ -11,6 +11,7 @@ import paymentRouter from './routes/payment';
 import profileRouter from './routes/profile';
 import sellerRouter from './routes/seller';
 import adminRouter from './routes/admin';
+import enterpriseRouter from './routes/enterprise';
 import aiRouter from './routes/ai';
 
 import rateLimit from 'express-rate-limit';
@@ -46,6 +47,7 @@ app.use('/api', paymentRouter);
 app.use('/api', profileRouter);
 app.use('/api', sellerRouter);
 app.use('/api', adminRouter);
+app.use('/api', enterpriseRouter);
 app.use('/api', aiRouter);
 
 // Healthcheck

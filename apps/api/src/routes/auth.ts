@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import prisma from '../prisma';
+import { Role } from '@prisma/client';
 import { ApiResponse } from '@shopsphere/shared-types';
 
 const router = Router();
@@ -255,7 +256,7 @@ router.post('/refresh', async (req: Request, res: Response) => {
 
 // GET /auth/dev-login - Bypass logic for developer authentication
 router.get('/dev-login', async (req: Request, res: Response) => {
-  const roleParam = (req.query.role as string || 'CUSTOMER').toUpperCase();
+  const roleParam = (req.query.role as string || 'CUSTOMER').toUpperCase() as Role;
   const email = `${roleParam.toLowerCase()}-dev@shopsphere.com`;
   const name = `Dev ${roleParam.charAt(0) + roleParam.slice(1).toLowerCase()}`;
 
@@ -299,6 +300,7 @@ router.get('/dev-login', async (req: Request, res: Response) => {
     let redirectPath = '/dashboard';
     if (roleParam === 'ADMIN') redirectPath = '/admin/dashboard';
     else if (roleParam === 'SELLER') redirectPath = '/seller/dashboard';
+    else if (roleParam === 'ENTERPRISE') redirectPath = '/enterprise/dashboard';
 
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectPath}`);
   } catch (error) {
