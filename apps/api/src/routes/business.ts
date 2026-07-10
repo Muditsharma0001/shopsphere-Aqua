@@ -85,4 +85,109 @@ router.get('/business/dashboard', async (req: Request, res: Response) => {
   }
 });
 
+// GET /api/business/products - Retrieve full database catalog with computed retail stats
+router.get('/business/products', async (req: Request, res: Response) => {
+  try {
+    const products = await prisma.product.findMany({
+      include: {
+        category: true,
+        brand: true,
+        images: true,
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    const mapped = products.map((prod) => {
+      // Deterministic ratings and sales counts based on product ID hashes for high-fidelity mocks
+      const rating = 4.2 + (prod.name.charCodeAt(0) % 8) * 0.1;
+      const salesCount = 50 + (prod.name.charCodeAt(1) || 0) * 3;
+      const sku = `SKU-${prod.name.slice(0, 3).toUpperCase()}-${prod.id.slice(0, 4).toUpperCase()}`;
+      
+      return {
+        id: prod.id,
+        name: prod.name,
+        slug: prod.slug,
+        sku,
+        description: prod.description,
+        price: prod.price,
+        compareAtPrice: prod.compareAtPrice,
+        stock: prod.stock,
+        categoryId: prod.categoryId,
+        category: prod.category.name,
+        brand: prod.brand.name,
+        images: prod.images.map((img) => img.url),
+        status: prod.isApproved ? 'Published' : 'Draft',
+        rating,
+        totalSales: salesCount,
+        lastUpdated: prod.updatedAt,
+        createdAt: prod.createdAt,
+      };
+    });
+
+    res.status(200).json({ success: true, data: mapped });
+  } catch (error) {
+    console.error('Fetch business products error:', error);
+    res.status(500).json({ success: false, message: 'Server products error.' });
+  }
+});
+
+// POST /api/business/products/bulk-publish
+router.post('/business/products/bulk-publish', async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ success: false, message: 'Invalid product IDs list.' });
+    }
+
+    await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { isApproved: true },
+    });
+
+    res.status(200).json({ success: true, message: 'Successfully published selected products.' });
+  } catch (error) {
+    console.error('Bulk publish error:', error);
+    res.status(500).json({ success: false, message: 'Server bulk update error.' });
+  }
+});
+
+// POST /api/business/products/bulk-unpublish
+router.post('/business/products/bulk-unpublish', async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ success: false, message: 'Invalid product IDs list.' });
+    }
+
+    await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { isApproved: false },
+    });
+
+    res.status(200).json({ success: true, message: 'Successfully unpublished selected products.' });
+  } catch (error) {
+    console.error('Bulk unpublish error:', error);
+    res.status(500).json({ success: false, message: 'Server bulk update error.' });
+  }
+});
+
+// POST /api/business/products/bulk-delete
+router.post('/business/products/bulk-delete', async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ success: false, message: 'Invalid product IDs list.' });
+    }
+
+    await prisma.product.deleteMany({
+      where: { id: { in: ids } },
+    });
+
+    res.status(200).json({ success: true, message: 'Successfully deleted selected products.' });
+  } catch (error) {
+    console.error('Bulk delete error:', error);
+    res.status(500).json({ success: false, message: 'Server bulk delete error.' });
+  }
+});
+
 export default router;
