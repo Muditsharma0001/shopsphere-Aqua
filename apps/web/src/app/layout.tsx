@@ -57,8 +57,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${outfit.variable} ${inter.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-[#030304]">
+      <body className="min-h-full flex flex-col bg-[#030304]" suppressHydrationWarning>
         {children}
         <MiniCart />
         <AIAssistant />

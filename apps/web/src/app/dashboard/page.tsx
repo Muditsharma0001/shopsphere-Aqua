@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ScrollFoundation from '../../components/ScrollFoundation';
 import Navbar from '../../components/Navbar';
 import { useCartStore } from '../../store/useCartStore';
+import { useThemeStore } from '../../store/useThemeStore';
 import { motion, AnimatePresence } from 'framer-motion';
 
 interface UserProfile {
@@ -59,6 +60,7 @@ interface Warranty {
 }
 
 export default function Dashboard() {
+  const { theme, toggleTheme } = useThemeStore();
   const { wishlist, moveToCart, toggleWishlist } = useCartStore();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'profile' | 'addresses' | 'wishlist' | 'notifications' | 'warranty' | 'settings'>('overview');

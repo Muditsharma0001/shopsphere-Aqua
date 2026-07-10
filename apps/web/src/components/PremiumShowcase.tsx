@@ -233,8 +233,6 @@ export default function PremiumShowcase() {
     window.addEventListener('resize', resizeCanvas);
 
     const render = () => {
-      localTime += 16.7; // ms elapsed per frame approx
-
       const width = lastResizeWidth;
       const height = lastResizeHeight;
 
