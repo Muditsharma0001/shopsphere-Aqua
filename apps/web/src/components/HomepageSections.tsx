@@ -816,7 +816,7 @@ export default function HomepageSections({
                     ))}
                   </div>
                   <p className="text-[10px] text-zinc-300 mt-3 leading-relaxed">
-                    "{rev.comment}"
+                    &quot;{rev.comment}&quot;
                   </p>
                 </div>
 

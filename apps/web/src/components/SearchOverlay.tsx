@@ -139,7 +139,7 @@ export default function SearchOverlay({
 
             {query && results.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-sm text-zinc-500">No results found matching "{query}"</p>
+                <p className="text-sm text-zinc-500">No results found matching &quot;{query}&quot;</p>
               </div>
             )}
 

@@ -57,8 +57,15 @@ export default function CheckoutPage() {
   const gstAmount = (subtotal - discountAmount) * 0.05;
   const grandTotal = Math.max(0, subtotal - discountAmount + shippingCost + gstAmount);
 
+  interface CompletedOrder {
+    id: string;
+    orderNumber: string;
+    shippingMethod: string;
+    grandTotal: number;
+  }
+
   // Completed Order State from server
-  const [completedOrder, setCompletedOrder] = useState<any>(null);
+  const [completedOrder, setCompletedOrder] = useState<CompletedOrder | null>(null);
   const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   // Address book load
@@ -164,7 +171,7 @@ export default function CheckoutPage() {
         description: `Order ${order.orderNumber} Payment`,
         image: 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=100',
         order_id: razorpayOrderId,
-        handler: async (response: any) => {
+        handler: async (response: { razorpay_order_id: string; razorpay_payment_id: string; razorpay_signature: string }) => {
           setIsProcessingPayment(true);
           try {
             // Verify signature
@@ -210,6 +217,7 @@ export default function CheckoutPage() {
       };
 
       // Open Razorpay modal
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
 

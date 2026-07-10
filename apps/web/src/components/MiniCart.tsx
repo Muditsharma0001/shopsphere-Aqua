@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useCartStore, CartItem } from '../store/useCartStore';
+import { useCartStore } from '../store/useCartStore';
 
 export default function MiniCart() {
   const {

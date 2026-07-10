@@ -4,10 +4,7 @@ import { useState, useEffect } from 'react';
 import ScrollFoundation from '../../components/ScrollFoundation';
 import Navbar from '../../components/Navbar';
 import { useCartStore } from '../../store/useCartStore';
-import { useThemeStore } from '../../store/useThemeStore';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Product } from '@shopsphere/shared-types';
-import Link from 'next/link';
 
 interface UserProfile {
   id: string;
@@ -27,7 +24,7 @@ interface Order {
   paymentStatus: string;
   shippingMethod: string;
   createdAt: string;
-  orderItems: any[];
+  orderItems: { productName: string; color: string; capacity: string; quantity: number }[];
 }
 
 interface Address {
@@ -62,8 +59,7 @@ interface Warranty {
 }
 
 export default function Dashboard() {
-  const { theme, toggleTheme } = useThemeStore();
-  const { cart, wishlist, moveToCart, toggleWishlist } = useCartStore();
+  const { wishlist, moveToCart, toggleWishlist } = useCartStore();
 
   const [activeTab, setActiveTab] = useState<'overview' | 'orders' | 'profile' | 'addresses' | 'wishlist' | 'notifications' | 'warranty' | 'settings'>('overview');
 
@@ -240,7 +236,7 @@ export default function Dashboard() {
     }
   };
 
-  const handleDownloadInvoice = (orderId: string, orderNumber: string) => {
+  const handleDownloadInvoice = (orderId: string) => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
     window.location.href = `${apiUrl}/api/orders/${orderId}/invoice`;
   };
@@ -319,7 +315,7 @@ export default function Dashboard() {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id as 'overview' | 'orders' | 'profile' | 'addresses' | 'wishlist' | 'notifications' | 'warranty' | 'settings')}
                     className={`px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-3 shrink-0 ${
                       activeTab === tab.id
                         ? 'bg-indigo-600 text-white shadow shadow-indigo-500/10'
@@ -444,7 +440,7 @@ export default function Dashboard() {
 
                             {/* Order Items list */}
                             <div className="divide-y divide-zinc-900">
-                              {order.orderItems?.map((item: any, idx: number) => (
+                              {order.orderItems?.map((item, idx) => (
                                 <div key={idx} className="py-2.5 flex justify-between text-[10px]">
                                   <div>
                                     <span className="font-bold text-white uppercase">{item.productName}</span>
@@ -463,7 +459,7 @@ export default function Dashboard() {
                               </div>
                               
                               <button
-                                onClick={() => handleDownloadInvoice(order.id, order.orderNumber)}
+                                onClick={() => handleDownloadInvoice(order.id)}
                                 className="px-3.5 py-1.5 rounded-xl border border-zinc-800 bg-zinc-950 text-[8px] font-bold uppercase tracking-widest text-zinc-400 hover:text-white transition-colors"
                               >
                                 Download Invoice

@@ -329,7 +329,7 @@ export default function SellerDashboard() {
                 ].map((tab) => (
                   <button
                     key={tab.id}
-                    onClick={() => setActiveTab(tab.id as any)}
+                    onClick={() => setActiveTab(tab.id as 'home' | 'products' | 'inventory' | 'orders' | 'coupons' | 'messages' | 'settings')}
                     className={`px-4 py-3 rounded-xl text-left text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-3 shrink-0 ${
                       activeTab === tab.id
                         ? 'bg-indigo-600 text-white shadow shadow-indigo-500/10'

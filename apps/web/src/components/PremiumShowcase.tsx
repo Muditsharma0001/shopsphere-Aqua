@@ -210,7 +210,6 @@ export default function PremiumShowcase() {
 
     let lastResizeWidth = 0;
     let lastResizeHeight = 0;
-    let localTime = 0;
 
     const resizeCanvas = () => {
       const width = window.innerWidth;

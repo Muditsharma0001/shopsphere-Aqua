@@ -542,7 +542,7 @@ export default function ProductDetails() {
                       </div>
                       <div className="text-amber-500 text-[9px]">★★★★★</div>
                       <p className="text-[10px] text-zinc-400 leading-relaxed pt-1">
-                        "{rev.comment}"
+                        &quot;{rev.comment}&quot;
                       </p>
                     </div>
                   </div>

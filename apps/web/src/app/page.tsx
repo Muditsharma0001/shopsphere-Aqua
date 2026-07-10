@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Product, ApiResponse, User } from '@shopsphere/shared-types';
+import { Product, ApiResponse } from '@shopsphere/shared-types';
 import PremiumShowcase from '../components/PremiumShowcase';
 import ScrollFoundation from '../components/ScrollFoundation';
 import Navbar from '../components/Navbar';
@@ -11,41 +11,8 @@ export default function Home() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [errorProducts, setErrorProducts] = useState<string | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-
-  // Initialize Lenis Smooth Scroll
-
-  // Fetch authentication status and products
+  // Fetch products
   useEffect(() => {
-    const fetchProfile = async (retry = true) => {
-      try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-        const res = await fetch(`${apiUrl}/auth/me`, { credentials: 'include' });
-        
-        if (res.status === 401 && retry) {
-          const refreshRes = await fetch(`${apiUrl}/auth/refresh`, {
-            method: 'POST',
-            credentials: 'include',
-          });
-          if (refreshRes.ok) {
-            await fetchProfile(false);
-          } else {
-            setUser(null);
-          }
-        } else if (res.ok) {
-          const data: ApiResponse<User> = await res.json();
-          if (data.success && data.data) {
-            setUser(data.data);
-          }
-        } else {
-          setUser(null);
-        }
-      } catch (err) {
-        console.error('Failed to fetch profile:', err);
-        setUser(null);
-      }
-    };
-
     const fetchProducts = async () => {
       try {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
@@ -68,24 +35,8 @@ export default function Home() {
       }
     };
 
-    fetchProfile();
     fetchProducts();
   }, []);
-
-  const handleLogout = async () => {
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      const res = await fetch(`${apiUrl}/auth/logout`, {
-        method: 'POST',
-        credentials: 'include',
-      });
-      if (res.ok) {
-        setUser(null);
-      }
-    } catch (err) {
-      console.error('Failed to logout:', err);
-    }
-  };
 
 
 
