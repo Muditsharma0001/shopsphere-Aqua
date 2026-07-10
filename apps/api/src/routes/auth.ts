@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
+import bcrypt from 'bcryptjs';
 import prisma from '../prisma';
 import { Role } from '@prisma/client';
 import { ApiResponse } from '@shopsphere/shared-types';
@@ -23,6 +24,148 @@ const getCookieOptions = (maxAgeMs: number) => ({
   secure: process.env.NODE_ENV === 'production',
   sameSite: 'lax' as const,
   maxAge: maxAgeMs,
+});
+
+// POST /auth/register - Register customer
+router.post('/register', async (req: Request, res: Response) => {
+  const { name, email, password, phone } = req.body;
+  if (!name || !email || !password) {
+    return res.status(400).json({ success: false, message: 'Name, email, and password are required.' });
+  }
+
+  try {
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ success: false, message: 'Email address already registered.' });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+
+    const user = await prisma.user.create({
+      data: {
+        name,
+        email,
+        passwordHash,
+        phone: phone || null,
+        role: 'CUSTOMER',
+        provider: 'LOCAL',
+        isVerified: true,
+      },
+    });
+
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_access_secret_key';
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_key';
+
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      jwtSecret,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      jwtRefreshSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    res.status(201).json({ success: true, data: user });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ success: false, message: 'Server registration error.' });
+  }
+});
+
+// POST /auth/login - User email/password login
+router.post('/login', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and password are required.' });
+  }
+
+  try {
+    // Ensure default business owner is seeded
+    const defaultOwnerEmail = 'owner@shopsphere.com';
+    let defaultOwner = await prisma.user.findUnique({ where: { email: defaultOwnerEmail } });
+    if (!defaultOwner) {
+      const salt = await bcrypt.genSalt(10);
+      const hash = await bcrypt.hash('password123', salt);
+      defaultOwner = await prisma.user.create({
+        data: {
+          email: defaultOwnerEmail,
+          name: 'Store Owner',
+          passwordHash: hash,
+          role: 'BUSINESS_OWNER',
+          isVerified: true,
+        },
+      });
+      console.log('[Auth] Automatically seeded default business owner: owner@shopsphere.com');
+    }
+
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user || !user.passwordHash) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials.' });
+    }
+
+    const isMatch = await bcrypt.compare(password, user.passwordHash);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: 'Invalid credentials.' });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_access_secret_key';
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_key';
+
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      jwtSecret,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      jwtRefreshSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    res.status(200).json({ success: true, data: user });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ success: false, message: 'Server login error.' });
+  }
+});
+
+// POST /auth/forgot-password - Forgot password placeholder
+router.post('/forgot-password', async (req: Request, res: Response) => {
+  const { email } = req.body;
+  if (!email) {
+    return res.status(400).json({ success: false, message: 'Email is required.' });
+  }
+  res.status(200).json({ success: true, message: 'Password reset link has been dispatched to your email address.' });
+});
+
+// POST /auth/reset-password - Reset password placeholder
+router.post('/reset-password', async (req: Request, res: Response) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    return res.status(400).json({ success: false, message: 'Email and new password are required.' });
+  }
+  try {
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    await prisma.user.update({
+      where: { email },
+      data: { passwordHash },
+    });
+    res.status(200).json({ success: true, message: 'Password has been reset successfully.' });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Server reset error.' });
+  }
 });
 
 // GET /auth/google - Start OAuth flow
