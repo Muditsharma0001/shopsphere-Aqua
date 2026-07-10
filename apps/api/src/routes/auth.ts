@@ -253,6 +253,60 @@ router.post('/refresh', async (req: Request, res: Response) => {
   }
 });
 
+// GET /auth/dev-login - Bypass logic for developer authentication
+router.get('/dev-login', async (req: Request, res: Response) => {
+  const roleParam = (req.query.role as string || 'CUSTOMER').toUpperCase();
+  const email = `${roleParam.toLowerCase()}-dev@shopsphere.com`;
+  const name = `Dev ${roleParam.charAt(0) + roleParam.slice(1).toLowerCase()}`;
+
+  try {
+    let user = await prisma.user.findFirst({
+      where: { role: roleParam },
+    });
+
+    if (!user) {
+      user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          role: roleParam,
+          rewardPoints: 500,
+          membershipLevel: 'GOLD',
+          isVerified: true,
+        },
+      });
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_access_secret_key';
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_key';
+
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      jwtSecret,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      jwtRefreshSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    // Redirect to matching portal
+    let redirectPath = '/dashboard';
+    if (roleParam === 'ADMIN') redirectPath = '/admin/dashboard';
+    else if (roleParam === 'SELLER') redirectPath = '/seller/dashboard';
+
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectPath}`);
+  } catch (error) {
+    console.error('Dev login error:', error);
+    res.status(500).json({ success: false, message: 'Dev login error' });
+  }
+});
+
 // POST /auth/logout - Clear session
 router.post('/logout', (req: Request, res: Response) => {
   res.clearCookie('accessToken', {
