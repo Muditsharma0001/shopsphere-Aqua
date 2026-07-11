@@ -11,7 +11,7 @@ router.get('/business/dashboard', async (req: Request, res: Response) => {
     const totalProducts = await prisma.product.count();
     const totalOrders = await prisma.order.count();
     const paidOrders = await prisma.order.findMany({ where: { paymentStatus: 'PAID' } });
-    const totalRevenue = paidOrders.reduce((sum, o) => sum + o.grandTotal, 0);
+    const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + o.grandTotal, 0);
 
     const conversionRate = 3.8;
     const topProducts = [

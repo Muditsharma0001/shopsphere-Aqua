@@ -291,7 +291,7 @@ router.get('/orders/:id/invoice', async (req: Request, res: Response) => {
 
     // Items List
     let currentY = 310;
-    order.orderItems.forEach((item) => {
+    order.orderItems.forEach((item: any) => {
       doc.fillColor('#334155').fontSize(8).text(item.productName, 50, currentY, { width: 160 });
       doc.text(`${item.color} / ${item.capacity}`, 220, currentY);
       doc.text(item.quantity.toString(), 350, currentY, { align: 'center' });
