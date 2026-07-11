@@ -4,7 +4,8 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function ExperienceGatewayWrapper({ children }: { children: React.ReactNode }) {
-  const [selected, setSelected] = useState(false);
+  const [selected, setSelected] = useState(true);
+  const [initialized, setInitialized] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
@@ -13,8 +14,33 @@ export default function ExperienceGatewayWrapper({ children }: { children: React
     const bypass = sessionStorage.getItem('experienceBypass');
     if (bypass === 'true') {
       sessionStorage.removeItem('experienceBypass');
+      localStorage.setItem('hydraflow_auth_active', 'true');
       setSelected(true);
+      setInitialized(true);
+      return;
     }
+
+    const authActive = localStorage.getItem('hydraflow_auth_active');
+    if (authActive === 'true') {
+      setSelected(true);
+      // Verify profile session status in background
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      fetch(`${apiUrl}/api/profile`, { credentials: 'include' })
+        .then((res) => res.json())
+        .then((data) => {
+          if (!data.success) {
+            // Session expired or invalid
+            localStorage.removeItem('hydraflow_auth_active');
+            setSelected(false);
+          }
+        })
+        .catch(() => {
+          // Network error, fallback to keeping current selected view
+        });
+    } else {
+      setSelected(false);
+    }
+    setInitialized(true);
   }, []);
 
   const handleCustomerSelect = () => {
@@ -32,6 +58,11 @@ export default function ExperienceGatewayWrapper({ children }: { children: React
     sessionStorage.setItem('experienceBypass', 'true');
     window.location.href = `${apiUrl}/auth/demo-login?role=BUSINESS_OWNER`;
   };
+
+  if (!initialized) {
+    // Return empty placeholder on first paint hydration pass to avoid flash
+    return null;
+  }
 
   return (
     <>

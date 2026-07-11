@@ -44,6 +44,7 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
       await fetch(`${apiUrl}/auth/logout`, { method: 'POST', credentials: 'include' });
+      localStorage.removeItem('hydraflow_auth_active');
       setUser(null);
       setDropdownOpen(false);
       window.location.href = '/';
