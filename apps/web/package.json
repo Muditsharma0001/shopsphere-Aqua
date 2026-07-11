@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsc -p ../../packages/shared-types && next build",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint"
   },
