@@ -47,6 +47,7 @@ export const metadata: Metadata = {
 
 import MiniCart from "../components/MiniCart";
 import AIAssistant from "../components/AIAssistant";
+import ExperienceGatewayWrapper from "../components/ExperienceGatewayWrapper";
 
 export default function RootLayout({
   children,
@@ -60,7 +61,9 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col bg-[#030304]" suppressHydrationWarning>
-        {children}
+        <ExperienceGatewayWrapper>
+          {children}
+        </ExperienceGatewayWrapper>
         <MiniCart />
         <AIAssistant />
       </body>
