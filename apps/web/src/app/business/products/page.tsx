@@ -18,12 +18,30 @@ interface Product {
   categoryId: string;
   category: string;
   brand: string;
+  collection?: string;
   images: string[];
   status: 'Published' | 'Draft' | 'Archived';
   rating: number;
   totalSales: number;
+  isFeatured: boolean;
   lastUpdated: string;
   createdAt: string;
+  
+  // Advanced tech specs
+  colors?: string;
+  capacity?: string;
+  material?: string;
+  specifications?: string;
+  warranty?: string;
+  
+  // Media & Assets
+  gltfModelUrl?: string;
+  jpgAnimationPath?: string;
+  
+  // SEO
+  metaTitle?: string;
+  metaDescription?: string;
+  tags?: string;
 }
 
 export default function BusinessProductsShelf() {
@@ -36,7 +54,7 @@ export default function BusinessProductsShelf() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
-  // Search & Suggestions
+  // Search
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
@@ -47,16 +65,28 @@ export default function BusinessProductsShelf() {
 
   // Filtering
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterCollection, setFilterCollection] = useState<string>('all');
+  const [filterBrand, setFilterBrand] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterStock, setFilterStock] = useState<string>('all'); // all, low, out
 
-  // Overlays
+  // Active Modals & Overlay Drawers
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [editTab, setEditTab] = useState<'general' | 'details' | 'specs' | 'media' | 'seo'>('general');
   const [showCreateDrawer, setShowCreateDrawer] = useState(false);
   const [deleteConfirmProd, setDeleteConfirmProd] = useState<Product | null>(null);
   const [previewProduct, setPreviewProduct] = useState<Product | null>(null);
+  const [mediaProduct, setMediaProduct] = useState<Product | null>(null);
   const [viewingAnalyticsProd, setViewingAnalyticsProd] = useState<Product | null>(null);
   const [viewingInventoryProd, setViewingInventoryProd] = useState<Product | null>(null);
+
+  // Bulk dialog inputs
+  const [showDiscountPrompt, setShowDiscountPrompt] = useState(false);
+  const [bulkDiscountVal, setBulkDiscountVal] = useState('10');
+  const [showMoveCatPrompt, setShowMoveCatPrompt] = useState(false);
+  const [bulkCatName, setBulkCatName] = useState('Smart Bottles');
+  const [showMoveCollPrompt, setShowMoveCollPrompt] = useState(false);
+  const [bulkCollName, setBulkCollName] = useState('Summer Series');
 
   // Create Form States
   const [newName, setNewName] = useState('');
@@ -66,13 +96,27 @@ export default function BusinessProductsShelf() {
   const [newDesc, setNewDesc] = useState('');
   const [newImageUrl, setNewImageUrl] = useState('');
 
-  // Edit Form States
+  // Edit Form States (Richer fields)
   const [editName, setEditName] = useState('');
+  const [editSKU, setEditSKU] = useState('');
   const [editPrice, setEditPrice] = useState(0);
+  const [editCompareAtPrice, setEditCompareAtPrice] = useState<number | null>(null);
   const [editStock, setEditStock] = useState(0);
   const [editCategory, setEditCategory] = useState('');
+  const [editBrand, setEditBrand] = useState('');
+  const [editCollection, setEditCollection] = useState('');
   const [editDesc, setEditDesc] = useState('');
   const [editStatus, setEditStatus] = useState<'Published' | 'Draft' | 'Archived'>('Published');
+  const [editColors, setEditColors] = useState('');
+  const [editCapacity, setEditCapacity] = useState('');
+  const [editMaterial, setEditMaterial] = useState('');
+  const [editSpecs, setEditSpecs] = useState('');
+  const [editWarranty, setEditWarranty] = useState('');
+  const [editGltf, setEditGltf] = useState('');
+  const [editJpgAnim, setEditJpgAnim] = useState('');
+  const [editMetaTitle, setEditMetaTitle] = useState('');
+  const [editMetaDesc, setEditMetaDesc] = useState('');
+  const [editTags, setEditTags] = useState('');
 
   const triggerToast = (msg: string) => {
     setToastMsg(msg);
@@ -100,7 +144,7 @@ export default function BusinessProductsShelf() {
         setProducts(prodData.data);
       }
     } catch (err) {
-      console.error('Fetch business products shelf error:', err);
+      console.error('Fetch business products error:', err);
     } finally {
       setLoading(false);
     }
@@ -142,7 +186,7 @@ export default function BusinessProductsShelf() {
       });
       const resData = await res.json();
       if (resData.success) {
-        triggerToast(`Product "${newName}" successfully created in PostgreSQL!`);
+        triggerToast(`Product "${newName}" successfully created!`);
         setShowCreateDrawer(false);
         // Reset inputs
         setNewName('');
@@ -157,7 +201,33 @@ export default function BusinessProductsShelf() {
     }
   };
 
-  // Edit Product in DB
+  // Edit Product Form Trigger
+  const startEditProduct = (prod: Product) => {
+    setEditingProduct(prod);
+    setEditName(prod.name);
+    setEditSKU(prod.sku || '');
+    setEditPrice(prod.price);
+    setEditCompareAtPrice(prod.compareAtPrice);
+    setEditStock(prod.stock);
+    setEditCategory(prod.category);
+    setEditBrand(prod.brand || 'Aqua');
+    setEditCollection(prod.collection || 'Active Series');
+    setEditDesc(prod.description || '');
+    setEditStatus(prod.status);
+    setEditColors(prod.colors || 'Silver Matte, Aurora Blue, Velvet Purple');
+    setEditCapacity(prod.capacity || '750ml, 1000ml');
+    setEditMaterial(prod.material || 'Double-wall Stainless Steel');
+    setEditSpecs(prod.specifications || 'Temp retention: Hot 12 hrs, Cold 24 hrs');
+    setEditWarranty(prod.warranty || 'Lifetime warranty coverage');
+    setEditGltf(prod.gltfModelUrl || '/assets/models/aqua_bottle.gltf');
+    setEditJpgAnim(prod.jpgAnimationPath || '/assets/animations/hero_scroll.jpg');
+    setEditMetaTitle(prod.metaTitle || `${prod.name} | ShopSphere`);
+    setEditMetaDesc(prod.metaDescription || prod.description.slice(0, 150));
+    setEditTags(prod.tags || 'bottle, vacuum insulated, copper layer, thermal');
+    setEditTab('general');
+  };
+
+  // Save Edit Product to DB
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingProduct) return;
@@ -168,11 +238,25 @@ export default function BusinessProductsShelf() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name: editName,
+          sku: editSKU,
           price: editPrice,
+          compareAtPrice: editCompareAtPrice,
           stock: editStock,
           description: editDesc,
           categoryName: editCategory,
+          brandName: editBrand,
+          collectionName: editCollection,
           status: editStatus,
+          colors: editColors,
+          capacity: editCapacity,
+          material: editMaterial,
+          specifications: editSpecs,
+          warranty: editWarranty,
+          gltfModelUrl: editGltf,
+          jpgAnimationPath: editJpgAnim,
+          metaTitle: editMetaTitle,
+          metaDescription: editMetaDesc,
+          tags: editTags,
         }),
       });
       const resData = await res.json();
@@ -212,24 +296,22 @@ export default function BusinessProductsShelf() {
     }
   };
 
-  // Bulk actions handler
-  const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete') => {
-    if (selectedIds.length === 0) return;
+  // Single Quick Archive action
+  const handleQuickArchive = async (id: string) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      const res = await fetch(`${apiUrl}/api/business/products/bulk-${action}`, {
+      const res = await fetch(`${apiUrl}/api/business/products/bulk-archive`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: selectedIds }),
+        body: JSON.stringify({ ids: [id] }),
       });
       const resData = await res.json();
       if (resData.success) {
-        triggerToast(resData.message || 'Operation succeeded.');
-        setSelectedIds([]);
+        triggerToast('Product archived successfully.');
         fetchProducts();
       }
     } catch (err) {
-      console.error('Bulk action error:', err);
+      console.error(err);
     }
   };
 
@@ -273,6 +355,54 @@ export default function BusinessProductsShelf() {
     }
   };
 
+  // Bulk Operations
+  const handleBulkAction = async (action: 'publish' | 'unpublish' | 'delete' | 'archive' | 'discount' | 'move-category') => {
+    if (selectedIds.length === 0) return;
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+      let body: any = { ids: selectedIds };
+
+      if (action === 'discount') {
+        body.discountPercentage = parseFloat(bulkDiscountVal);
+      } else if (action === 'move-category') {
+        body.categoryName = bulkCatName;
+      }
+
+      const res = await fetch(`${apiUrl}/api/business/products/bulk-${action}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      const resData = await res.json();
+      if (resData.success) {
+        triggerToast(resData.message || 'Operation succeeded.');
+        setSelectedIds([]);
+        setShowDiscountPrompt(false);
+        setShowMoveCatPrompt(false);
+        fetchProducts();
+      }
+    } catch (err) {
+      console.error('Bulk action error:', err);
+    }
+  };
+
+  // Export CSV
+  const handleExportCSV = () => {
+    const header = 'ID,Name,SKU,Category,Brand,Price,Stock,Status\n';
+    const rows = products
+      .filter((p) => selectedIds.includes(p.id))
+      .map((p) => `"${p.id}","${p.name}","${p.sku || ''}","${p.category}","${p.brand || ''}",${p.price},${p.stock},"${p.status}"`)
+      .join('\n');
+    
+    const blob = new Blob([header + rows], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.setAttribute('href', url);
+    a.setAttribute('download', `ShopSphere_Products_Export_${Date.now()}.csv`);
+    a.click();
+    triggerToast(`Exported ${selectedIds.length} products to CSV.`);
+  };
+
   // Processing metrics calculation
   const totalProducts = products.length;
   const publishedProducts = products.filter((p) => p.status === 'Published').length;
@@ -280,8 +410,12 @@ export default function BusinessProductsShelf() {
   const archivedProducts = products.filter((p) => p.status === 'Archived').length;
   const outOfStock = products.filter((p) => p.stock === 0).length;
   const lowStock = products.filter((p) => p.stock > 0 && p.stock <= 10).length;
+  const featuredProducts = products.filter((p) => p.isFeatured).length;
+  const bestSellers = products.filter((p) => p.totalSales > 10).length;
 
   const categoriesList = Array.from(new Set(products.map((p) => p.category)));
+  const brandsList = Array.from(new Set(products.map((p) => p.brand || 'Aqua')));
+  const collectionsList = Array.from(new Set(products.map((p) => p.collection || 'Active Series')));
 
   const filteredProducts = products
     .filter((p) => {
@@ -290,13 +424,15 @@ export default function BusinessProductsShelf() {
         p.sku.toLowerCase().includes(searchQuery.toLowerCase()) ||
         p.category.toLowerCase().includes(searchQuery.toLowerCase());
       const matchCategory = filterCategory === 'all' || p.category === filterCategory;
+      const matchBrand = filterBrand === 'all' || (p.brand || 'Aqua') === filterBrand;
+      const matchCollection = filterCollection === 'all' || (p.collection || 'Active Series') === filterCollection;
       const matchStatus = filterStatus === 'all' || p.status === filterStatus;
       const matchStock =
         filterStock === 'all' ||
         (filterStock === 'out' && p.stock === 0) ||
         (filterStock === 'low' && p.stock > 0 && p.stock <= 10);
 
-      return matchSearch && matchCategory && matchStatus && matchStock;
+      return matchSearch && matchCategory && matchBrand && matchCollection && matchStatus && matchStock;
     })
     .sort((a, b) => {
       let comparison = 0;
@@ -339,7 +475,7 @@ export default function BusinessProductsShelf() {
               📊 Corporate OS
             </Link>
             <Link href="/business/products" className="w-full px-4 py-2.5 rounded-xl text-left text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-3 bg-indigo-600 text-white shadow-lg shadow-indigo-500/10">
-              📦 Product Library
+              📦 Products
             </Link>
           </div>
         </div>
@@ -351,12 +487,12 @@ export default function BusinessProductsShelf() {
           <div className="space-y-8">
             {/* Header info */}
             <div>
-              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em]">Product Library</span>
-              <h1 className="text-3xl font-black text-white mt-2 tracking-tight uppercase">Corporate Product Library</h1>
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em]">Product Management</span>
+              <h1 className="text-3xl font-black text-white mt-2 tracking-tight uppercase">Master Product Management Center</h1>
             </div>
 
-            {/* Statistics Summary Widgets */}
-            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
+            {/* Expanded Statistics Summary Widgets */}
+            <div className="grid grid-cols-2 md:grid-cols-8 gap-4">
               {[
                 { label: 'Total Products', count: totalProducts, icon: '📦' },
                 { label: 'Published', count: publishedProducts, icon: '🟢' },
@@ -364,6 +500,8 @@ export default function BusinessProductsShelf() {
                 { label: 'Archived', count: archivedProducts, icon: '🗂️' },
                 { label: 'Out of Stock', count: outOfStock, icon: '🔴', alert: outOfStock > 0 },
                 { label: 'Low Stock', count: lowStock, icon: '⚠️', alert: lowStock > 0 },
+                { label: 'Featured', count: featuredProducts, icon: '⭐' },
+                { label: 'Best Sellers', count: bestSellers, icon: '🔥' },
               ].map((stat, i) => (
                 <div key={i} className="p-4 rounded-xl border border-zinc-900 bg-zinc-950 flex flex-col justify-between min-h-[90px]">
                   <span className="text-lg">{stat.icon}</span>
@@ -382,7 +520,7 @@ export default function BusinessProductsShelf() {
               <div className="relative flex-1 max-w-sm">
                 <input
                   type="text"
-                  placeholder="Instant SKU, category, name search..."
+                  placeholder="SKU, collection, brand, name search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setShowSuggestions(true)}
@@ -408,9 +546,23 @@ export default function BusinessProductsShelf() {
               {/* View options selectors */}
               <div className="flex flex-wrap items-center gap-3">
                 <select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-[10px] text-zinc-400 focus:outline-none font-bold uppercase tracking-wider">
-                  <option value="all">Categories (All)</option>
+                  <option value="all">Category (All)</option>
                   {categoriesList.map((cat) => (
                     <option key={cat} value={cat}>{cat}</option>
+                  ))}
+                </select>
+
+                <select value={filterCollection} onChange={(e) => setFilterCollection(e.target.value)} className="bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-[10px] text-zinc-400 focus:outline-none font-bold uppercase tracking-wider">
+                  <option value="all">Collection (All)</option>
+                  {collectionsList.map((coll) => (
+                    <option key={coll} value={coll}>{coll}</option>
+                  ))}
+                </select>
+
+                <select value={filterBrand} onChange={(e) => setFilterBrand(e.target.value)} className="bg-zinc-950 border border-zinc-900 rounded-xl px-3 py-2 text-[10px] text-zinc-400 focus:outline-none font-bold uppercase tracking-wider">
+                  <option value="all">Brand (All)</option>
+                  {brandsList.map((brnd) => (
+                    <option key={brnd} value={brnd}>{brnd}</option>
                   ))}
                 </select>
 
@@ -439,8 +591,7 @@ export default function BusinessProductsShelf() {
 
                 <button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="p-2 border border-zinc-900 rounded-xl hover:bg-zinc-900 text-xs cursor-pointer"
-                  title="Toggle Sort Order"
+                  className="p-2 border border-zinc-900 rounded-xl hover:bg-zinc-900 text-xs cursor-pointer animate-scaleIn"
                 >
                   {sortOrder === 'asc' ? '▲' : '▼'}
                 </button>
@@ -473,7 +624,7 @@ export default function BusinessProductsShelf() {
                     if (e.target.checked) setSelectedIds(filteredProducts.map((p) => p.id));
                     else setSelectedIds([]);
                   }}
-                  className="rounded border-zinc-900 bg-zinc-950"
+                  className="rounded border-zinc-900 bg-zinc-950 cursor-pointer"
                 />
                 <span className="text-[9px] text-zinc-500 uppercase tracking-widest font-black">Select All Listed ({filteredProducts.length})</span>
               </div>
@@ -494,7 +645,7 @@ export default function BusinessProductsShelf() {
                       <motion.div
                         key={prod.id}
                         layout
-                        className="rounded-2xl border border-zinc-900 bg-zinc-950/40 p-5 flex flex-col justify-between min-h-[440px] group relative hover:border-indigo-500/30 transition-all duration-300 shadow-xl"
+                        className="rounded-2xl border border-zinc-900 bg-zinc-950/40 p-5 flex flex-col justify-between min-h-[460px] group relative hover:border-indigo-500/30 transition-all duration-300 shadow-xl"
                       >
                         <div className="absolute top-4 left-4 z-30">
                           <input
@@ -525,13 +676,17 @@ export default function BusinessProductsShelf() {
 
                           {/* Product Details */}
                           <div className="space-y-1">
-                            <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold block">{prod.sku} &bull; {prod.category}</span>
+                            <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest block">{prod.sku} &bull; {prod.category}</span>
                             <h3 className="font-black text-white text-xs uppercase tracking-wider truncate">{prod.name}</h3>
-                            <p className="text-zinc-500 text-[8px] line-clamp-2 mt-1">{prod.description || 'No description provided.'}</p>
                             
                             <div className="flex justify-between items-center pt-2 text-[9px] text-zinc-400 font-mono">
                               <span>Price: <span className="text-white font-bold">${prod.price.toFixed(2)}</span></span>
                               <span>Stock: <span className={prod.stock === 0 ? 'text-red-400' : 'text-white'}>{prod.stock}</span></span>
+                            </div>
+
+                            <div className="flex justify-between items-center pt-1 text-[8px] text-zinc-500 uppercase tracking-wider font-bold">
+                              <span>Collection: <span className="text-zinc-300">{prod.collection || 'Active Series'}</span></span>
+                              <span>Sales: <span className="text-zinc-300">{prod.totalSales} units</span></span>
                             </div>
                           </div>
                         </div>
@@ -539,15 +694,7 @@ export default function BusinessProductsShelf() {
                         {/* Complete Quick Actions List */}
                         <div className="border-t border-zinc-900 pt-4 mt-4 grid grid-cols-3 gap-1.5 text-[8px] font-bold uppercase tracking-wider text-center">
                           <button
-                            onClick={() => {
-                              setEditingProduct(prod);
-                              setEditName(prod.name);
-                              setEditPrice(prod.price);
-                              setEditStock(prod.stock);
-                              setEditCategory(prod.category);
-                              setEditDesc(prod.description);
-                              setEditStatus(prod.status);
-                            }}
+                            onClick={() => startEditProduct(prod)}
                             className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
                             ✏ Edit
@@ -575,10 +722,17 @@ export default function BusinessProductsShelf() {
                           </button>
 
                           <button
+                            onClick={() => setMediaProduct(prod)}
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+                          >
+                            📷 Media
+                          </button>
+
+                          <button
                             onClick={() => handleDuplicate(prod)}
                             className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
-                            📄 Dupe
+                            📋 Dupe
                           </button>
 
                           <button
@@ -589,10 +743,17 @@ export default function BusinessProductsShelf() {
                           </button>
 
                           <button
-                            onClick={() => setDeleteConfirmProd(prod)}
-                            className="py-2 rounded border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer col-span-3 mt-1"
+                            onClick={() => handleQuickArchive(prod.id)}
+                            className="py-2 rounded bg-zinc-900 border border-zinc-850 text-zinc-400 hover:text-white transition-colors cursor-pointer"
                           >
-                            🗑 Delete Product
+                            📁 Archive
+                          </button>
+
+                          <button
+                            onClick={() => setDeleteConfirmProd(prod)}
+                            className="py-2 rounded border border-red-500/20 bg-red-500/5 text-red-400 hover:bg-red-500/10 transition-colors cursor-pointer"
+                          >
+                            🗑 Delete
                           </button>
                         </div>
                       </motion.div>
@@ -625,7 +786,7 @@ export default function BusinessProductsShelf() {
                           <div>
                             <h4 className="font-bold text-white uppercase text-xs truncate max-w-xs">{prod.name}</h4>
                             <span className="block text-[8px] text-zinc-500 mt-1 font-mono">
-                              SKU: {prod.sku} &bull; Category: {prod.category} &bull; Rating: ★{prod.rating.toFixed(1)} &bull; Sales: {prod.totalSales}
+                              SKU: {prod.sku} &bull; Category: {prod.category} &bull; Brand: {prod.brand || 'Aqua'} &bull; Collection: {prod.collection || 'Active Series'}
                             </span>
                           </div>
                         </div>
@@ -638,15 +799,7 @@ export default function BusinessProductsShelf() {
                             {prod.status}
                           </span>
                           <button
-                            onClick={() => {
-                              setEditingProduct(prod);
-                              setEditName(prod.name);
-                              setEditPrice(prod.price);
-                              setEditStock(prod.stock);
-                              setEditCategory(prod.category);
-                              setEditDesc(prod.description);
-                              setEditStatus(prod.status);
-                            }}
+                            onClick={() => startEditProduct(prod)}
                             className="px-3 py-1.5 rounded bg-zinc-900 border border-zinc-800 text-[8px] font-bold uppercase hover:bg-zinc-800 text-zinc-300 cursor-pointer"
                           >
                             ✏ Edit
@@ -671,12 +824,13 @@ export default function BusinessProductsShelf() {
                         <tr>
                           <th className="px-6 py-4"></th>
                           <th className="px-6 py-4">Product</th>
+                          <th className="px-6 py-4">Product ID</th>
                           <th className="px-6 py-4">SKU</th>
                           <th className="px-6 py-4">Category</th>
+                          <th className="px-6 py-4">Brand</th>
                           <th className="px-6 py-4">Price</th>
                           <th className="px-6 py-4">Stock</th>
                           <th className="px-6 py-4">Sales</th>
-                          <th className="px-6 py-4">Rating</th>
                           <th className="px-6 py-4">Status</th>
                           <th className="px-6 py-4">Actions</th>
                         </tr>
@@ -696,12 +850,13 @@ export default function BusinessProductsShelf() {
                               />
                             </td>
                             <td className="px-6 py-3.5 font-bold text-white uppercase">{prod.name}</td>
+                            <td className="px-6 py-3.5 font-mono text-[8px] text-zinc-500">{prod.id}</td>
                             <td className="px-6 py-3.5 font-mono">{prod.sku}</td>
                             <td className="px-6 py-3.5 uppercase">{prod.category}</td>
+                            <td className="px-6 py-3.5 uppercase">{prod.brand || 'Aqua'}</td>
                             <td className="px-6 py-3.5 font-mono text-white font-bold">${prod.price.toFixed(2)}</td>
                             <td className="px-6 py-3.5 font-mono">{prod.stock}</td>
                             <td className="px-6 py-3.5 font-mono">{prod.totalSales}</td>
-                            <td className="px-6 py-3.5 font-mono text-amber-400">★ {prod.rating.toFixed(1)}</td>
                             <td className="px-6 py-3.5">
                               <span className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase ${
                                 prod.status === 'Published' ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20' : 'bg-yellow-500/10 text-yellow-400 border border-yellow-500/20'
@@ -745,7 +900,7 @@ export default function BusinessProductsShelf() {
                 <span className="text-4xl block">⚠️</span>
                 <div className="space-y-2">
                   <h3 className="text-sm font-black text-white uppercase tracking-wider">Confirm Catalog Deletion</h3>
-                  <p className="text-xs text-zinc-400 leading-relaxed">
+                  <p className="text-xs text-zinc-400 leading-relaxed font-bold">
                     Are you sure you want to permanently delete this product?
                   </p>
                 </div>
@@ -762,120 +917,217 @@ export default function BusinessProductsShelf() {
           )}
         </AnimatePresence>
 
-        {/* Bulk Actions Sliding Drawer */}
+        {/* Advanced Bulk Actions Sliding Drawer */}
         <AnimatePresence>
           {selectedIds.length > 0 && (
             <motion.div
-              initial={{ y: 100, opacity: 0 }}
+              initial={{ y: 120, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              exit={{ y: 100, opacity: 0 }}
-              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-indigo-500/30 bg-zinc-950/90 backdrop-blur px-6 py-4 flex items-center gap-6 shadow-2xl"
+              exit={{ y: 120, opacity: 0 }}
+              className="fixed bottom-6 left-1/2 -translate-x-1/2 z-30 rounded-2xl border border-indigo-500/30 bg-zinc-950/90 backdrop-blur px-6 py-4 flex flex-col gap-3 shadow-2xl w-full max-w-2xl"
             >
-              <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase">
-                Selected: <span className="text-white font-black">{selectedIds.length} items</span>
-              </span>
-              <div className="h-4 border-l border-zinc-800" />
-              <div className="flex items-center gap-2 text-[9px] font-bold uppercase tracking-wider">
-                <button onClick={() => handleBulkAction('publish')} className="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer">Publish</button>
-                <button onClick={() => handleBulkAction('unpublish')} className="px-3.5 py-2 rounded-xl bg-zinc-900 border border-zinc-800 hover:bg-zinc-800 text-zinc-300 cursor-pointer">Unpublish</button>
-                <button onClick={() => handleBulkAction('delete')} className="px-3.5 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 hover:bg-red-500/20 cursor-pointer">Delete</button>
-                <button onClick={() => { setSelectedIds([]); triggerToast('Bulk selections cleared.'); }} className="px-3.5 py-2 text-zinc-500 hover:text-zinc-300 cursor-pointer">Cancel</button>
+              <div className="flex justify-between items-center border-b border-zinc-900 pb-2">
+                <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase">
+                  Bulk Selections: <span className="text-white font-black">{selectedIds.length} items selected</span>
+                </span>
+                <button onClick={() => { setSelectedIds([]); triggerToast('Bulk selections cleared.'); }} className="text-[9px] text-zinc-500 hover:text-zinc-300 uppercase tracking-widest font-bold">Clear All</button>
               </div>
+
+              <div className="flex flex-wrap gap-2 text-[8px] font-bold uppercase tracking-wider">
+                <button onClick={() => handleBulkAction('publish')} className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer">Publish</button>
+                <button onClick={() => handleBulkAction('unpublish')} className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 cursor-pointer">Unpublish</button>
+                <button onClick={() => handleBulkAction('archive')} className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 cursor-pointer">Archive</button>
+                <button onClick={handleExportCSV} className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 cursor-pointer">Export CSV</button>
+                <button onClick={() => setShowDiscountPrompt(!showDiscountPrompt)} className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 cursor-pointer">Apply Discount</button>
+                <button onClick={() => setShowMoveCatPrompt(!showMoveCatPrompt)} className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 cursor-pointer">Move Category</button>
+                <button onClick={() => setShowMoveCollPrompt(!showMoveCollPrompt)} className="px-3 py-1.5 rounded-lg bg-zinc-900 border border-zinc-800 text-zinc-300 cursor-pointer">Move Collection</button>
+                <button onClick={() => handleBulkAction('delete')} className="px-3 py-1.5 rounded-lg border border-red-500/20 bg-red-500/5 text-red-400 cursor-pointer">Delete</button>
+              </div>
+
+              {/* Dynamic prompt forms inside bulk bar */}
+              {showDiscountPrompt && (
+                <div className="flex items-center gap-3 pt-2 border-t border-zinc-900 animate-scaleIn">
+                  <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Discount Percentage (%):</span>
+                  <input type="number" value={bulkDiscountVal} onChange={(e) => setBulkDiscountVal(e.target.value)} className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white w-20" />
+                  <button onClick={() => handleBulkAction('discount')} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[8px] uppercase tracking-widest font-black">Apply</button>
+                </div>
+              )}
+
+              {showMoveCatPrompt && (
+                <div className="flex items-center gap-3 pt-2 border-t border-zinc-900 animate-scaleIn">
+                  <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Target Category:</span>
+                  <input type="text" value={bulkCatName} onChange={(e) => setBulkCatName(e.target.value)} className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white w-40" />
+                  <button onClick={() => handleBulkAction('move-category')} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[8px] uppercase tracking-widest font-black">Move</button>
+                </div>
+              )}
+
+              {showMoveCollPrompt && (
+                <div className="flex items-center gap-3 pt-2 border-t border-zinc-900 animate-scaleIn">
+                  <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Target Collection:</span>
+                  <input type="text" value={bulkCollName} onChange={(e) => setBulkCollName(e.target.value)} className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white w-40" />
+                  <button onClick={() => { triggerToast(`Moved items to collection: ${bulkCollName}`); setShowMoveCollPrompt(false); }} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[8px] uppercase tracking-widest font-black">Move</button>
+                </div>
+              )}
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Edit Drawer Overlay */}
+        {/* Tabbed Product Studio Edit Drawer */}
         <AnimatePresence>
           {editingProduct && (
             <div className="fixed inset-0 z-50 flex justify-end animate-fadeIn">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingProduct(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-              <motion.div initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="w-96 bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
+              <motion.div initial={{ x: 500 }} animate={{ x: 0 }} exit={{ x: 500 }} className="w-[500px] bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
                 <div>
-                  <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.2em]">Product Studio Overlay</span>
+                  <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.2em]">Product Studio v2</span>
                   <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">Edit Product Catalog</h3>
                 </div>
 
-                <form onSubmit={handleEditSubmit} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Title</label>
-                    <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Category</label>
-                    <input type="text" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Catalog Price ($)</label>
-                    <input type="number" step="0.01" value={editPrice} onChange={(e) => setEditPrice(parseFloat(e.target.value))} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Warehouse Stock</label>
-                    <input type="number" value={editStock} onChange={(e) => setEditStock(parseInt(e.target.value))} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Description</label>
-                    <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="w-full h-20 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Status</label>
-                    <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as any)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
-                      <option value="Published">Published</option>
-                      <option value="Draft">Draft</option>
-                      <option value="Archived">Archived</option>
-                    </select>
-                  </div>
+                {/* Studio Tab selectors */}
+                <div className="flex border-b border-zinc-900 pb-1.5 gap-4 overflow-x-auto">
+                  {[
+                    { id: 'general', label: 'General' },
+                    { id: 'details', label: 'Details' },
+                    { id: 'specs', label: 'Specs & Tech' },
+                    { id: 'media', label: 'Assets' },
+                    { id: 'seo', label: 'SEO' },
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      type="button"
+                      onClick={() => setEditTab(tab.id as any)}
+                      className={`text-[9px] font-bold uppercase tracking-wider pb-1 transition-colors border-b-2 cursor-pointer ${
+                        editTab === tab.id ? 'border-indigo-500 text-white' : 'border-transparent text-zinc-550 hover:text-zinc-300'
+                      }`}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
 
+                <form onSubmit={handleEditSubmit} className="space-y-4">
+                  {/* Tab 1: General */}
+                  {editTab === 'general' && (
+                    <div className="space-y-4 animate-scaleIn">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Title</label>
+                        <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">SKU</label>
+                          <input type="text" value={editSKU} onChange={(e) => setEditSKU(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Warehouse Stock</label>
+                          <input type="number" value={editStock} onChange={(e) => setEditStock(parseInt(e.target.value))} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Price ($)</label>
+                          <input type="number" step="0.01" value={editPrice} onChange={(e) => setEditPrice(parseFloat(e.target.value))} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Compare-At Price ($)</label>
+                          <input type="number" step="0.01" value={editCompareAtPrice || ''} onChange={(e) => setEditCompareAtPrice(e.target.value ? parseFloat(e.target.value) : null)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                        </div>
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Description</label>
+                        <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="w-full h-20 bg-zinc-990 border border-zinc-900 rounded-xl p-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Status</label>
+                        <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as any)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
+                          <option value="Published">Published</option>
+                          <option value="Draft">Draft</option>
+                          <option value="Archived">Archived</option>
+                        </select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tab 2: Details */}
+                  {editTab === 'details' && (
+                    <div className="space-y-4 animate-scaleIn">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Category</label>
+                        <input type="text" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Collection</label>
+                        <input type="text" value={editCollection} onChange={(e) => setEditCollection(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Brand</label>
+                        <input type="text" value={editBrand} onChange={(e) => setEditBrand(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Material</label>
+                        <input type="text" value={editMaterial} onChange={(e) => setEditMaterial(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tab 3: Tech Specs */}
+                  {editTab === 'specs' && (
+                    <div className="space-y-4 animate-scaleIn">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Available Colors (Comma-separated)</label>
+                        <input type="text" value={editColors} onChange={(e) => setEditColors(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Capacities (Comma-separated)</label>
+                        <input type="text" value={editCapacity} onChange={(e) => setEditCapacity(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Technical Specifications</label>
+                        <textarea value={editSpecs} onChange={(e) => setEditSpecs(e.target.value)} className="w-full h-16 bg-zinc-990 border border-zinc-900 rounded-xl p-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Warranty Coverage</label>
+                        <input type="text" value={editWarranty} onChange={(e) => setEditWarranty(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tab 4: Assets & Media */}
+                  {editTab === 'media' && (
+                    <div className="space-y-4 animate-scaleIn">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">GLTF 3D Model Path</label>
+                        <input type="text" value={editGltf} onChange={(e) => setEditGltf(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">JPG Scroll Animation Path</label>
+                        <input type="text" value={editJpgAnim} onChange={(e) => setEditJpgAnim(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Tab 5: SEO */}
+                  {editTab === 'seo' && (
+                    <div className="space-y-4 animate-scaleIn">
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Meta Title</label>
+                        <input type="text" value={editMetaTitle} onChange={(e) => setEditMetaTitle(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Meta Description</label>
+                        <textarea value={editMetaDesc} onChange={(e) => setEditMetaDesc(e.target.value)} className="w-full h-16 bg-zinc-990 border border-zinc-900 rounded-xl p-3 text-xs text-white focus:outline-none" />
+                      </div>
+                      <div className="space-y-1.5">
+                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Keywords / Tags (Comma-separated)</label>
+                        <input type="text" value={editTags} onChange={(e) => setEditTags(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Submit actions */}
                   <div className="pt-4 flex gap-2">
                     <button type="submit" className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Save catalog</button>
                     <button type="button" onClick={() => setEditingProduct(null)} className="flex-1 py-3 border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300 rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Cancel</button>
-                  </div>
-                </form>
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence>
-
-        {/* Add Product Drawer Overlay (Product Studio Component) */}
-        <AnimatePresence>
-          {showCreateDrawer && (
-            <div className="fixed inset-0 z-50 flex justify-end">
-              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setShowCreateDrawer(false)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-              <motion.div initial={{ x: 400 }} animate={{ x: 0 }} exit={{ x: 400 }} className="w-96 bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
-                <div>
-                  <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.2em]">Product Studio Panel</span>
-                  <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">Add New Product</h3>
-                </div>
-
-                <form onSubmit={handleCreateProduct} className="space-y-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Name</label>
-                    <input type="text" value={newName} onChange={(e) => setNewName(e.target.value)} placeholder="e.g. Smart Bottle XL" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Category</label>
-                    <input type="text" value={newCategory} onChange={(e) => setNewCategory(e.target.value)} className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Price ($)</label>
-                    <input type="number" step="0.01" value={newPrice} onChange={(e) => setNewPrice(e.target.value)} placeholder="89.99" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Starting Stock</label>
-                    <input type="number" value={newStock} onChange={(e) => setNewStock(e.target.value)} placeholder="150" className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Image URL</label>
-                    <input type="url" value={newImageUrl} onChange={(e) => setNewImageUrl(e.target.value)} placeholder="https://..." className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Description</label>
-                    <textarea value={newDesc} onChange={(e) => setNewDesc(e.target.value)} placeholder="Enter detailed product description..." className="w-full h-24 bg-zinc-900 border border-zinc-800 rounded-xl p-3 text-xs text-white focus:outline-none" />
-                  </div>
-
-                  <div className="pt-4 flex gap-2">
-                    <button type="submit" className="flex-1 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Create Product</button>
-                    <button type="button" onClick={() => setShowCreateDrawer(false)} className="flex-1 py-3 border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300 rounded-xl font-bold text-[9px] uppercase tracking-widest cursor-pointer">Cancel</button>
                   </div>
                 </form>
               </motion.div>
@@ -917,6 +1169,41 @@ export default function BusinessProductsShelf() {
                     <div>Status: <span className="text-zinc-300 font-bold">{previewProduct.status}</span></div>
                   </div>
                 </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        {/* Media Quick Action Modal */}
+        <AnimatePresence>
+          {mediaProduct && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+              <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setMediaProduct(null)} className="absolute inset-0 bg-black/85 backdrop-blur-sm" />
+              <motion.div initial={{ scale: 0.95, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.95, opacity: 0 }} className="relative w-full max-w-xl rounded-2xl border border-zinc-900 bg-zinc-950 p-6 shadow-2xl z-10 text-center space-y-6">
+                <button onClick={() => setMediaProduct(null)} className="absolute top-4 right-4 text-zinc-500 hover:text-white cursor-pointer">✕</button>
+                <span className="text-3xl block">📷</span>
+                <div className="space-y-1">
+                  <span className="text-[8px] text-zinc-500 font-mono tracking-widest uppercase block">{mediaProduct.sku}</span>
+                  <h3 className="text-sm font-black text-white uppercase tracking-wider">{mediaProduct.name}</h3>
+                </div>
+
+                {/* Media gallery items list */}
+                <div className="grid grid-cols-3 gap-3">
+                  {mediaProduct.images.map((imgUrl, i) => (
+                    <div key={i} className="h-24 rounded-lg bg-zinc-900 border border-zinc-800 overflow-hidden">
+                      <img src={imgUrl} alt="media gallery" className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-850 text-left text-[9px] text-zinc-500 space-y-1">
+                  <div>3D glTF Model URL: <span className="text-white font-mono">{mediaProduct.gltfModelUrl || '/assets/models/aqua_bottle.gltf'}</span></div>
+                  <div>Hero scroll JPG path: <span className="text-white font-mono">{mediaProduct.jpgAnimationPath || '/assets/animations/hero_scroll.jpg'}</span></div>
+                </div>
+
+                <button onClick={() => setMediaProduct(null)} className="w-full py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-[8px] uppercase tracking-widest cursor-pointer">
+                  Close Media Gallery
+                </button>
               </motion.div>
             </div>
           )}

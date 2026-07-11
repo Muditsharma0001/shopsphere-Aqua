@@ -190,6 +190,84 @@ router.post('/business/products/bulk-delete', async (req: Request, res: Response
   }
 });
 
+// POST /api/business/products/bulk-archive
+router.post('/business/products/bulk-archive', async (req: Request, res: Response) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ success: false, message: 'Invalid product IDs list.' });
+    }
+
+    // Set isApproved to false to simulate unpublish/archive
+    await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { isApproved: false },
+    });
+
+    res.status(200).json({ success: true, message: 'Successfully archived selected products.' });
+  } catch (error) {
+    console.error('Bulk archive error:', error);
+    res.status(500).json({ success: false, message: 'Server bulk archive error.' });
+  }
+});
+
+// POST /api/business/products/bulk-discount
+router.post('/business/products/bulk-discount', async (req: Request, res: Response) => {
+  try {
+    const { ids, discountPercentage } = req.body;
+    if (!Array.isArray(ids) || typeof discountPercentage !== 'number') {
+      return res.status(400).json({ success: false, message: 'Invalid products list or discount parameter.' });
+    }
+
+    const products = await prisma.product.findMany({ where: { id: { in: ids } } });
+    for (const p of products) {
+      const newPrice = Math.max(0.01, p.price * (1 - discountPercentage / 100));
+      await prisma.product.update({
+        where: { id: p.id },
+        data: {
+          compareAtPrice: p.price,
+          price: parseFloat(newPrice.toFixed(2)),
+        },
+      });
+    }
+
+    res.status(200).json({ success: true, message: `Applied ${discountPercentage}% discount to selected products.` });
+  } catch (error) {
+    console.error('Bulk discount error:', error);
+    res.status(500).json({ success: false, message: 'Server bulk discount error.' });
+  }
+});
+
+// POST /api/business/products/bulk-move-category
+router.post('/business/products/bulk-move-category', async (req: Request, res: Response) => {
+  try {
+    const { ids, categoryName } = req.body;
+    if (!Array.isArray(ids) || !categoryName) {
+      return res.status(400).json({ success: false, message: 'Invalid products list or category name.' });
+    }
+
+    let category = await prisma.category.findUnique({ where: { name: categoryName } });
+    if (!category) {
+      category = await prisma.category.create({
+        data: {
+          name: categoryName,
+          slug: categoryName.toLowerCase().replace(/[^a-z0-9]+/g, '-'),
+        },
+      });
+    }
+
+    await prisma.product.updateMany({
+      where: { id: { in: ids } },
+      data: { categoryId: category.id },
+    });
+
+    res.status(200).json({ success: true, message: `Successfully moved selected products to category: ${categoryName}.` });
+  } catch (error) {
+    console.error('Bulk move category error:', error);
+    res.status(500).json({ success: false, message: 'Server bulk category move error.' });
+  }
+});
+
 // POST /api/business/products - Create a new product in PostgreSQL
 router.post('/business/products', async (req: Request, res: Response) => {
   try {
