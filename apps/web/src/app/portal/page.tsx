@@ -5,34 +5,43 @@ import Link from 'next/link';
 import ScrollFoundation from '../../components/ScrollFoundation';
 import Navbar from '../../components/Navbar';
 
-const portalCards = [
-  {
-    id: 'customer',
-    icon: '👤',
-    title: 'Customer',
-    desc: 'Purchase premium water bottles. Track orders. Manage profile. Wishlist. Rewards. AI Shopping Assistant.',
-    tags: ['Storefront', 'Orders', 'Wishlist', 'Rewards', 'AI Shopping Assistant'],
-    btnLabel: 'Continue as Customer',
-    href: '/login?role=CUSTOMER',
-  },
-  {
-    id: 'business',
-    icon: '🏢',
-    title: 'Business Owner',
-    desc: 'Manage the entire business. Products. Orders. Customers. Website. Analytics. Marketing. Inventory.',
-    tags: ['Business OS', 'Product Studio', 'Website Builder', 'CRM', 'Finance', 'Security'],
-    btnLabel: 'Continue as Business Owner',
-    href: '/business/login?role=BUSINESS_OWNER',
-  },
-];
-
 export default function PortalGateway() {
+  const isDemo = process.env.NEXT_PUBLIC_DEMO_MODE === 'true';
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+
+  const portalCards = [
+    {
+      id: 'customer',
+      icon: '👤',
+      title: 'Customer',
+      desc: 'Purchase premium water bottles. Track orders. Manage profile. Wishlist. Rewards. AI Shopping Assistant.',
+      tags: ['Storefront', 'Orders', 'Wishlist', 'Rewards', 'AI Shopping Assistant'],
+      btnLabel: 'Continue as Customer',
+      href: isDemo ? `${apiUrl}/auth/demo-login?role=CUSTOMER` : '/login?role=CUSTOMER',
+    },
+    {
+      id: 'business',
+      icon: '🏢',
+      title: 'Business Owner',
+      desc: 'Manage the entire business. Products. Orders. Customers. Website. Analytics. Marketing. Inventory.',
+      tags: ['Business OS', 'Product Studio', 'Website Builder', 'CRM', 'Finance', 'Security'],
+      btnLabel: 'Continue as Business Owner',
+      href: isDemo ? `${apiUrl}/auth/demo-login?role=BUSINESS_OWNER` : '/business/login?role=BUSINESS_OWNER',
+    },
+  ];
+
   return (
     <ScrollFoundation>
       <div className="min-h-screen bg-[#030304] text-zinc-100 font-sans antialiased overflow-x-hidden relative flex flex-col justify-center items-center">
         {/* Ambient luxury glows */}
         <div className="absolute top-[10%] left-[15%] w-[40vw] h-[40vw] bg-indigo-500/5 rounded-full filter blur-[120px] pointer-events-none" />
         <div className="absolute bottom-[15%] right-[15%] w-[35vw] h-[35vw] bg-purple-500/3 rounded-full filter blur-[100px] pointer-events-none" />
+
+        {isDemo && (
+          <div className="fixed top-2 left-2 z-50 px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-[8px] font-bold text-indigo-400 uppercase tracking-widest pointer-events-none">
+            Portfolio Demo Mode
+          </div>
+        )}
 
         <Navbar />
 

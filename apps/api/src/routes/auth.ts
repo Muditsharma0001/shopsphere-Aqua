@@ -168,6 +168,64 @@ router.post('/reset-password', async (req: Request, res: Response) => {
   }
 });
 
+// GET /auth/demo-login - Seeding and instant JWT cookie generation for demo mode
+router.get('/demo-login', async (req: Request, res: Response) => {
+  const roleParam = req.query.role || 'CUSTOMER';
+  const role = (roleParam as string).toUpperCase();
+
+  try {
+    let email = 'demo.customer@hydraflow.com';
+    let name = 'Demo Customer';
+
+    if (role === 'BUSINESS_OWNER') {
+      email = 'admin@hydraflow.com';
+      name = 'Admin Owner';
+    }
+
+    let user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Create user automatically
+      user = await prisma.user.create({
+        data: {
+          email,
+          name,
+          role: role as any,
+          provider: 'LOCAL',
+          isVerified: true,
+          rewardPoints: role === 'CUSTOMER' ? 150 : 500,
+          membershipLevel: role === 'CUSTOMER' ? 'SILVER' : 'GOLD',
+        },
+      });
+      console.log(`[Demo Auth] Automatically created demo account: ${email} (${role})`);
+    }
+
+    const jwtSecret = process.env.JWT_SECRET || 'fallback_access_secret_key';
+    const jwtRefreshSecret = process.env.JWT_REFRESH_SECRET || 'fallback_refresh_secret_key';
+
+    const accessToken = jwt.sign(
+      { id: user.id, email: user.email, role: user.role },
+      jwtSecret,
+      { expiresIn: '15m' }
+    );
+
+    const refreshToken = jwt.sign(
+      { id: user.id },
+      jwtRefreshSecret,
+      { expiresIn: '7d' }
+    );
+
+    res.cookie('accessToken', accessToken, getCookieOptions(15 * 60 * 1000));
+    res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
+
+    // Redirect target
+    const redirectUrl = role === 'BUSINESS_OWNER' ? '/business/dashboard' : '/';
+    res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectUrl}`);
+  } catch (error) {
+    console.error('Demo login error:', error);
+    res.status(500).json({ success: false, message: 'Demo authentication failed.' });
+  }
+});
+
 // GET /auth/google - Start OAuth flow
 router.get('/google', (req: Request, res: Response) => {
   if (!googleClientId || !googleClientSecret) {

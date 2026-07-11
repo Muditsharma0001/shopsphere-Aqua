@@ -65,13 +65,19 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
   }, []);
 
   return (
-    <nav
-      className={`fixed top-4 left-1/2 -translate-x-1/2 z-45 w-[92%] max-w-5xl rounded-full border transition-all duration-500 ${
-        scrolled
-          ? 'bg-[var(--bg-surface)] backdrop-blur-xl border-[var(--border-primary)] py-3 shadow-lg shadow-black/10'
-          : 'bg-transparent border-transparent py-5'
-      }`}
-    >
+    <>
+      {process.env.NEXT_PUBLIC_DEMO_MODE === 'true' && (
+        <div className="fixed top-2 left-2 z-50 px-2 py-1 rounded bg-indigo-500/10 border border-indigo-500/20 text-[8px] font-bold text-indigo-400 uppercase tracking-widest pointer-events-none">
+          Portfolio Demo Mode
+        </div>
+      )}
+      <nav
+        className={`fixed top-4 left-1/2 -translate-x-1/2 z-45 w-[92%] max-w-5xl rounded-full border transition-all duration-500 ${
+          scrolled
+            ? 'bg-[var(--bg-surface)] backdrop-blur-xl border-[var(--border-primary)] py-3 shadow-lg shadow-black/10'
+            : 'bg-transparent border-transparent py-5'
+        }`}
+      >
       <div className="mx-auto flex items-center justify-between px-6 md:px-8">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-2.5 group">
@@ -378,5 +384,6 @@ export default function Navbar({ onSearchClick }: NavbarProps) {
         </Link>
       </div>
     </nav>
+    </>
   );
 }
