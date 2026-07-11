@@ -13,7 +13,7 @@
     "build:web": "npm run build --workspace=@shopsphere/web",
     "build:api": "npm run build --workspace=@shopsphere/api",
     "start:web": "npm run start --workspace=@shopsphere/web",
-    "build": "npm run build --workspaces --if-present",
+    "build": "npm run build --workspace=@shopsphere/shared-types && npm run build --workspace=@shopsphere/api && npm run build --workspace=@shopsphere/web",
     "lint": "npm run lint --workspaces --if-present",
     "typecheck": "tsc --build"
   },
