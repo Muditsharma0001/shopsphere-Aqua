@@ -9,7 +9,7 @@
     "lint": "eslint"
   },
   "dependencies": {
-    "@shopsphere/shared-types": "*",
+    "@shopsphere/shared-types": "file:../../packages/shared-types",
     "@tanstack/react-query": "^5.32.0",
     "clsx": "^2.1.1",
     "framer-motion": "^11.1.7",
