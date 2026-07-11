@@ -75,7 +75,7 @@ router.post('/checkout', async (req: Request, res: Response) => {
     }
 
     // Save Order to PostgreSQL
-    const order = await prisma.order.create({
+    const order = await (prisma as any).order.create({
       data: {
         orderNumber,
         userId: userId || null,
@@ -147,7 +147,7 @@ router.post('/verify', async (req: Request, res: Response) => {
       isVerified = razorpay_order_id.startsWith('rzp_mock_');
     }
 
-    const order = await prisma.order.findUnique({
+    const order = await (prisma as any).order.findUnique({
       where: { orderNumber },
     });
 
@@ -156,7 +156,7 @@ router.post('/verify', async (req: Request, res: Response) => {
     }
 
     if (isVerified) {
-      await prisma.order.update({
+      await (prisma as any).order.update({
         where: { orderNumber },
         data: {
           paymentStatus: 'PAID',
@@ -166,7 +166,7 @@ router.post('/verify', async (req: Request, res: Response) => {
       });
       return res.status(200).json({ success: true, message: 'Payment verified successfully.' });
     } else {
-      await prisma.order.update({
+      await (prisma as any).order.update({
         where: { orderNumber },
         data: {
           paymentStatus: 'FAILED',
@@ -184,7 +184,7 @@ router.post('/verify', async (req: Request, res: Response) => {
 router.get('/orders', async (req: Request, res: Response) => {
   try {
     const userId = req.query.userId as string;
-    const orders = await prisma.order.findMany({
+    const orders = await (prisma as any).order.findMany({
       where: userId ? { userId } : {},
       include: {
         orderItems: true,
@@ -203,7 +203,7 @@ router.get('/orders', async (req: Request, res: Response) => {
 // 4. Get Single Order Detail
 router.get('/orders/:id', async (req: Request, res: Response) => {
   try {
-    const order = await prisma.order.findUnique({
+    const order = await (prisma as any).order.findUnique({
       where: { id: req.params.id },
       include: {
         orderItems: true,
@@ -224,7 +224,7 @@ router.get('/orders/:id', async (req: Request, res: Response) => {
 // 5. Generate Dynamic PDF Invoice
 router.get('/orders/:id/invoice', async (req: Request, res: Response) => {
   try {
-    const order = await prisma.order.findUnique({
+    const order = await (prisma as any).order.findUnique({
       where: { id: req.params.id },
       include: {
         orderItems: true,

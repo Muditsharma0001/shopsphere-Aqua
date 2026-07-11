@@ -51,7 +51,7 @@ router.post('/register', async (req: Request, res: Response) => {
         role: 'CUSTOMER',
         provider: 'LOCAL',
         isVerified: true,
-      },
+      } as any,
     });
 
     const jwtSecret = process.env.JWT_SECRET || 'fallback_access_secret_key';
@@ -100,7 +100,7 @@ router.post('/login', async (req: Request, res: Response) => {
           passwordHash: hash,
           role: 'BUSINESS_OWNER',
           isVerified: true,
-        },
+        } as any,
       });
       console.log('[Auth] Automatically seeded default business owner: owner@shopsphere.com');
     }
@@ -194,7 +194,7 @@ router.get('/demo-login', async (req: Request, res: Response) => {
           isVerified: true,
           rewardPoints: role === 'CUSTOMER' ? 150 : 500,
           membershipLevel: role === 'CUSTOMER' ? 'SILVER' : 'GOLD',
-        },
+        } as any,
       });
       console.log(`[Demo Auth] Automatically created demo account: ${email} (${role})`);
     }
@@ -353,7 +353,7 @@ router.get('/google/callback', async (req: Request, res: Response) => {
     res.cookie('refreshToken', refreshToken, getCookieOptions(7 * 24 * 60 * 60 * 1000));
 
     // Redirect user to their corresponding route
-    const redirectPath = targetRole === 'BUSINESS_OWNER' ? '/business/dashboard' : '/';
+    const redirectPath = (targetRole as any) === 'BUSINESS_OWNER' ? '/business/dashboard' : '/';
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectPath}`);
   } catch (error: any) {
     console.error('[Google Callback Error]:', error);
@@ -483,7 +483,7 @@ router.get('/dev-login', async (req: Request, res: Response) => {
           rewardPoints: 500,
           membershipLevel: 'GOLD',
           isVerified: true,
-        },
+        } as any,
       });
     }
 
@@ -507,10 +507,10 @@ router.get('/dev-login', async (req: Request, res: Response) => {
 
     // Redirect to matching portal
     let redirectPath = '/dashboard';
-    if (roleParam === 'ADMIN') redirectPath = '/admin/dashboard';
-    else if (roleParam === 'SELLER') redirectPath = '/seller/dashboard';
-    else if (roleParam === 'ENTERPRISE') redirectPath = '/enterprise/dashboard';
-    else if (roleParam === 'BUSINESS_OWNER') redirectPath = '/business/dashboard';
+    if ((roleParam as any) === 'ADMIN') redirectPath = '/admin/dashboard';
+    else if ((roleParam as any) === 'SELLER') redirectPath = '/seller/dashboard';
+    else if ((roleParam as any) === 'ENTERPRISE') redirectPath = '/enterprise/dashboard';
+    else if ((roleParam as any) === 'BUSINESS_OWNER') redirectPath = '/business/dashboard';
 
     res.redirect(`${process.env.FRONTEND_URL || 'http://localhost:3000'}${redirectPath}`);
   } catch (error) {

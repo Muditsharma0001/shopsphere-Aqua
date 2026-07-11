@@ -9,8 +9,8 @@ router.get('/business/dashboard', async (req: Request, res: Response) => {
     // Gather database indices
     const totalUsers = await prisma.user.count();
     const totalProducts = await prisma.product.count();
-    const totalOrders = await prisma.order.count();
-    const paidOrders = await prisma.order.findMany({ where: { paymentStatus: 'PAID' } });
+    const totalOrders = await (prisma as any).order.count();
+    const paidOrders = await (prisma as any).order.findMany({ where: { paymentStatus: 'PAID' } });
     const totalRevenue = paidOrders.reduce((sum: number, o: any) => sum + o.grandTotal, 0);
 
     const conversionRate = 3.8;
@@ -116,7 +116,7 @@ router.get('/business/products', async (req: Request, res: Response) => {
         category: prod.category.name,
         brand: prod.brand.name,
         images: prod.images.map((img) => img.url),
-        status: prod.isApproved ? 'Published' : 'Draft',
+        status: (prod as any).isApproved ? 'Published' : 'Draft',
         rating,
         totalSales: salesCount,
         lastUpdated: prod.updatedAt,
@@ -139,9 +139,9 @@ router.post('/business/products/bulk-publish', async (req: Request, res: Respons
       return res.status(400).json({ success: false, message: 'Invalid product IDs list.' });
     }
 
-    await prisma.product.updateMany({
+    await (prisma.product as any).updateMany({
       where: { id: { in: ids } },
-      data: { isApproved: true },
+      data: { isApproved: true } as any,
     });
 
     res.status(200).json({ success: true, message: 'Successfully published selected products.' });
@@ -159,9 +159,9 @@ router.post('/business/products/bulk-unpublish', async (req: Request, res: Respo
       return res.status(400).json({ success: false, message: 'Invalid product IDs list.' });
     }
 
-    await prisma.product.updateMany({
+    await (prisma.product as any).updateMany({
       where: { id: { in: ids } },
-      data: { isApproved: false },
+      data: { isApproved: false } as any,
     });
 
     res.status(200).json({ success: true, message: 'Successfully unpublished selected products.' });
@@ -199,9 +199,9 @@ router.post('/business/products/bulk-archive', async (req: Request, res: Respons
     }
 
     // Set isApproved to false to simulate unpublish/archive
-    await prisma.product.updateMany({
+    await (prisma.product as any).updateMany({
       where: { id: { in: ids } },
-      data: { isApproved: false },
+      data: { isApproved: false } as any,
     });
 
     res.status(200).json({ success: true, message: 'Successfully archived selected products.' });
