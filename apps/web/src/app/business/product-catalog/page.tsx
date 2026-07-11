@@ -44,7 +44,7 @@ interface Product {
   tags?: string;
 }
 
-export default function BusinessProductsShelf() {
+export default function BusinessProductCatalog() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
@@ -189,7 +189,6 @@ export default function BusinessProductsShelf() {
       if (resData.success) {
         triggerToast(`Product "${newName}" successfully created!`);
         setShowCreateDrawer(false);
-        // Reset inputs
         setNewName('');
         setNewPrice('');
         setNewStock('');
@@ -520,7 +519,7 @@ export default function BusinessProductsShelf() {
                   </div>
 
                   <div className="space-y-4">
-                    <span className="block text-[8px] font-bold text-zinc-650 uppercase tracking-widest px-2">Navigation</span>
+                    <span className="block text-[8px] font-bold text-zinc-655 uppercase tracking-widest px-2">Navigation</span>
                     <Link
                       href="/business/dashboard"
                       onClick={() => setMobileDrawerOpen(false)}
@@ -549,11 +548,11 @@ export default function BusinessProductsShelf() {
           <div className="space-y-8">
             {/* Header info */}
             <div>
-              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em]">Product Management</span>
-              <h1 className="text-3xl font-black text-white mt-2 tracking-tight uppercase">Master Product Management Center</h1>
+              <span className="text-indigo-400 text-[10px] font-bold uppercase tracking-[0.2em]">Product Catalog</span>
+              <h1 className="text-3xl font-black text-white mt-2 tracking-tight uppercase">Product Catalog</h1>
             </div>
 
-            {/* Expanded Statistics Summary Widgets */}
+            {/* Statistics Summary Widgets */}
             <div className="grid grid-cols-2 md:grid-cols-8 gap-4">
               {[
                 { label: 'Total Products', count: totalProducts, icon: '📦' },
@@ -587,7 +586,7 @@ export default function BusinessProductsShelf() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onFocus={() => setShowSuggestions(true)}
                   onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
-                  className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-600 focus:outline-none focus:border-indigo-500/50 font-mono"
+                  className="w-full bg-zinc-950 border border-zinc-900 rounded-xl px-4 py-2.5 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-indigo-500/50 font-mono"
                 />
                 
                 {showSuggestions && suggestions.length > 0 && (
@@ -653,12 +652,11 @@ export default function BusinessProductsShelf() {
 
                 <button
                   onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                  className="p-2 border border-zinc-900 rounded-xl hover:bg-zinc-900 text-xs cursor-pointer animate-scaleIn"
+                  className="p-2 border border-zinc-900 rounded-xl hover:bg-zinc-900 text-xs cursor-pointer"
                 >
                   {sortOrder === 'asc' ? '▲' : '▼'}
                 </button>
 
-                {/* Switcher toggle */}
                 <div className="flex bg-zinc-950 border border-zinc-900 rounded-xl p-1 shrink-0">
                   {['grid', 'list', 'table'].map((m) => (
                     <button
@@ -696,7 +694,7 @@ export default function BusinessProductsShelf() {
             {filteredProducts.length === 0 ? (
               <div className="p-12 text-center border border-zinc-900 rounded-3xl bg-zinc-950/20">
                 <span className="text-3xl block">🔍</span>
-                <p className="text-zinc-500 text-xs mt-3 uppercase tracking-wider font-bold">No products match your active search filters.</p>
+                <p className="text-zinc-550 text-xs mt-3 uppercase tracking-wider font-bold">No products match your active search filters.</p>
               </div>
             ) : (
               <div>
@@ -722,7 +720,6 @@ export default function BusinessProductsShelf() {
                         </div>
 
                         <div className="space-y-4">
-                          {/* Image box */}
                           <div className="h-40 rounded-xl bg-zinc-950 border border-zinc-900 overflow-hidden relative">
                             {prod.images[0] ? (
                               <img src={prod.images[0]} alt={prod.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
@@ -736,9 +733,8 @@ export default function BusinessProductsShelf() {
                             </span>
                           </div>
 
-                          {/* Product Details */}
                           <div className="space-y-1">
-                            <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest block">{prod.sku} &bull; {prod.category}</span>
+                            <span className="text-[7px] font-mono text-zinc-550 uppercase tracking-widest block">{prod.sku} &bull; {prod.category}</span>
                             <h3 className="font-black text-white text-xs uppercase tracking-wider truncate">{prod.name}</h3>
                             
                             <div className="flex justify-between items-center pt-2 text-[9px] text-zinc-400 font-mono">
@@ -753,7 +749,7 @@ export default function BusinessProductsShelf() {
                           </div>
                         </div>
 
-                        {/* Complete Quick Actions List */}
+                        {/* Actions List */}
                         <div className="border-t border-zinc-900 pt-4 mt-4 grid grid-cols-3 gap-1.5 text-[8px] font-bold uppercase tracking-wider text-center">
                           <button
                             onClick={() => startEditProduct(prod)}
@@ -882,7 +878,7 @@ export default function BusinessProductsShelf() {
                 {viewMode === 'table' && (
                   <div className="rounded-2xl border border-zinc-900 bg-zinc-950/20 overflow-x-auto">
                     <table className="w-full text-[10px] text-left text-zinc-400 border-collapse">
-                      <thead className="bg-zinc-950 border-b border-zinc-900 text-zinc-500 uppercase tracking-widest text-[8px] font-black">
+                      <thead className="bg-zinc-950 border-b border-zinc-900 text-zinc-550 uppercase tracking-widest text-[8px] font-black">
                         <tr>
                           <th className="px-6 py-4"></th>
                           <th className="px-6 py-4">Product</th>
@@ -912,7 +908,7 @@ export default function BusinessProductsShelf() {
                               />
                             </td>
                             <td className="px-6 py-3.5 font-bold text-white uppercase">{prod.name}</td>
-                            <td className="px-6 py-3.5 font-mono text-[8px] text-zinc-500">{prod.id}</td>
+                            <td className="px-6 py-3.5 font-mono text-[8px] text-zinc-555">{prod.id}</td>
                             <td className="px-6 py-3.5 font-mono">{prod.sku}</td>
                             <td className="px-6 py-3.5 uppercase">{prod.category}</td>
                             <td className="px-6 py-3.5 uppercase">{prod.brand || 'Aqua'}</td>
@@ -970,7 +966,7 @@ export default function BusinessProductsShelf() {
                   <button onClick={handleExecuteDelete} className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-500 text-white font-bold text-[9px] uppercase tracking-widest cursor-pointer">
                     Delete Product
                   </button>
-                  <button onClick={() => setDeleteConfirmProd(null)} className="flex-1 py-3 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-500 hover:text-zinc-300 font-bold text-[9px] uppercase tracking-widest cursor-pointer">
+                  <button onClick={() => setDeleteConfirmProd(null)} className="flex-1 py-3 rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-550 hover:text-zinc-300 font-bold text-[9px] uppercase tracking-widest cursor-pointer">
                     Cancel
                   </button>
                 </div>
@@ -992,7 +988,7 @@ export default function BusinessProductsShelf() {
                 <span className="text-[9px] font-mono text-zinc-400 font-bold uppercase">
                   Bulk Selections: <span className="text-white font-black">{selectedIds.length} items selected</span>
                 </span>
-                <button onClick={() => { setSelectedIds([]); triggerToast('Bulk selections cleared.'); }} className="text-[9px] text-zinc-500 hover:text-zinc-300 uppercase tracking-widest font-bold">Clear All</button>
+                <button onClick={() => { setSelectedIds([]); triggerToast('Bulk selections cleared.'); }} className="text-[9px] text-zinc-550 hover:text-zinc-355 uppercase tracking-widest font-bold">Clear All</button>
               </div>
 
               <div className="flex flex-wrap gap-2 text-[8px] font-bold uppercase tracking-wider">
@@ -1009,7 +1005,7 @@ export default function BusinessProductsShelf() {
               {/* Dynamic prompt forms inside bulk bar */}
               {showDiscountPrompt && (
                 <div className="flex items-center gap-3 pt-2 border-t border-zinc-900 animate-scaleIn">
-                  <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Discount Percentage (%):</span>
+                  <span className="text-[8px] text-zinc-550 uppercase tracking-widest font-bold">Discount Percentage (%):</span>
                   <input type="number" value={bulkDiscountVal} onChange={(e) => setBulkDiscountVal(e.target.value)} className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white w-20" />
                   <button onClick={() => handleBulkAction('discount')} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[8px] uppercase tracking-widest font-black">Apply</button>
                 </div>
@@ -1017,7 +1013,7 @@ export default function BusinessProductsShelf() {
 
               {showMoveCatPrompt && (
                 <div className="flex items-center gap-3 pt-2 border-t border-zinc-900 animate-scaleIn">
-                  <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Target Category:</span>
+                  <span className="text-[8px] text-zinc-550 uppercase tracking-widest font-bold">Target Category:</span>
                   <input type="text" value={bulkCatName} onChange={(e) => setBulkCatName(e.target.value)} className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white w-40" />
                   <button onClick={() => handleBulkAction('move-category')} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[8px] uppercase tracking-widest font-black">Move</button>
                 </div>
@@ -1025,7 +1021,7 @@ export default function BusinessProductsShelf() {
 
               {showMoveCollPrompt && (
                 <div className="flex items-center gap-3 pt-2 border-t border-zinc-900 animate-scaleIn">
-                  <span className="text-[8px] text-zinc-500 uppercase tracking-widest font-bold">Target Collection:</span>
+                  <span className="text-[8px] text-zinc-555 uppercase tracking-widest font-bold">Target Collection:</span>
                   <input type="text" value={bulkCollName} onChange={(e) => setBulkCollName(e.target.value)} className="bg-zinc-900 border border-zinc-800 rounded px-2.5 py-1 text-xs text-white w-40" />
                   <button onClick={() => { triggerToast(`Moved items to collection: ${bulkCollName}`); setShowMoveCollPrompt(false); }} className="px-3 py-1 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-[8px] uppercase tracking-widest font-black">Move</button>
                 </div>
@@ -1037,9 +1033,9 @@ export default function BusinessProductsShelf() {
         {/* Tabbed Product Studio Edit Drawer */}
         <AnimatePresence>
           {editingProduct && (
-            <div className="fixed inset-0 z-50 flex justify-end animate-fadeIn">
+            <div className="fixed inset-0 z-50 flex justify-end">
               <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} onClick={() => setEditingProduct(null)} className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-              <motion.div initial={{ x: 500 }} animate={{ x: 0 }} exit={{ x: 500 }} className="w-[500px] bg-zinc-950 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
+              <motion.div initial={{ x: 500 }} animate={{ x: 0 }} exit={{ x: 500 }} className="w-[500px] bg-zinc-955 border-l border-zinc-900 p-8 space-y-6 relative z-10 overflow-y-auto">
                 <div>
                   <span className="text-indigo-400 text-[8px] font-bold uppercase tracking-[0.2em]">Product Studio v2</span>
                   <h3 className="text-lg font-black text-white uppercase mt-1 tracking-tight">Edit Product Catalog</h3>
@@ -1072,35 +1068,35 @@ export default function BusinessProductsShelf() {
                   {editTab === 'general' && (
                     <div className="space-y-4 animate-scaleIn">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Title</label>
+                        <label className="text-[9px] text-zinc-550 uppercase tracking-widest block font-bold">Product Title</label>
                         <input type="text" value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">SKU</label>
+                          <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">SKU</label>
                           <input type="text" value={editSKU} onChange={(e) => setEditSKU(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Warehouse Stock</label>
+                          <label className="text-[9px] text-zinc-550 uppercase tracking-widest block font-bold">Warehouse Stock</label>
                           <input type="number" value={editStock} onChange={(e) => setEditStock(parseInt(e.target.value))} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
                         </div>
                       </div>
                       <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-1.5">
-                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Price ($)</label>
+                          <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Price ($)</label>
                           <input type="number" step="0.01" value={editPrice} onChange={(e) => setEditPrice(parseFloat(e.target.value))} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" required />
                         </div>
                         <div className="space-y-1.5">
-                          <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Compare-At Price ($)</label>
+                          <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Compare-At Price ($)</label>
                           <input type="number" step="0.01" value={editCompareAtPrice || ''} onChange={(e) => setEditCompareAtPrice(e.target.value ? parseFloat(e.target.value) : null)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                         </div>
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Description</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Description</label>
                         <textarea value={editDesc} onChange={(e) => setEditDesc(e.target.value)} className="w-full h-20 bg-zinc-990 border border-zinc-900 rounded-xl p-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Status</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Status</label>
                         <select value={editStatus} onChange={(e) => setEditStatus(e.target.value as any)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none">
                           <option value="Published">Published</option>
                           <option value="Draft">Draft</option>
@@ -1114,19 +1110,19 @@ export default function BusinessProductsShelf() {
                   {editTab === 'details' && (
                     <div className="space-y-4 animate-scaleIn">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Category</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Category</label>
                         <input type="text" value={editCategory} onChange={(e) => setEditCategory(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Collection</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Collection</label>
                         <input type="text" value={editCollection} onChange={(e) => setEditCollection(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Brand</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Brand</label>
                         <input type="text" value={editBrand} onChange={(e) => setEditBrand(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Product Material</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Product Material</label>
                         <input type="text" value={editMaterial} onChange={(e) => setEditMaterial(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                     </div>
@@ -1136,19 +1132,19 @@ export default function BusinessProductsShelf() {
                   {editTab === 'specs' && (
                     <div className="space-y-4 animate-scaleIn">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Available Colors (Comma-separated)</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Available Colors (Comma-separated)</label>
                         <input type="text" value={editColors} onChange={(e) => setEditColors(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Capacities (Comma-separated)</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Capacities (Comma-separated)</label>
                         <input type="text" value={editCapacity} onChange={(e) => setEditCapacity(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Technical Specifications</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Technical Specifications</label>
                         <textarea value={editSpecs} onChange={(e) => setEditSpecs(e.target.value)} className="w-full h-16 bg-zinc-990 border border-zinc-900 rounded-xl p-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Warranty Coverage</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Warranty Coverage</label>
                         <input type="text" value={editWarranty} onChange={(e) => setEditWarranty(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                     </div>
@@ -1158,11 +1154,11 @@ export default function BusinessProductsShelf() {
                   {editTab === 'media' && (
                     <div className="space-y-4 animate-scaleIn">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">GLTF 3D Model Path</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">GLTF 3D Model Path</label>
                         <input type="text" value={editGltf} onChange={(e) => setEditGltf(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">JPG Scroll Animation Path</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">JPG Scroll Animation Path</label>
                         <input type="text" value={editJpgAnim} onChange={(e) => setEditJpgAnim(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                     </div>
@@ -1172,15 +1168,15 @@ export default function BusinessProductsShelf() {
                   {editTab === 'seo' && (
                     <div className="space-y-4 animate-scaleIn">
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Meta Title</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Meta Title</label>
                         <input type="text" value={editMetaTitle} onChange={(e) => setEditMetaTitle(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Meta Description</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Meta Description</label>
                         <textarea value={editMetaDesc} onChange={(e) => setEditMetaDesc(e.target.value)} className="w-full h-16 bg-zinc-990 border border-zinc-900 rounded-xl p-3 text-xs text-white focus:outline-none" />
                       </div>
                       <div className="space-y-1.5">
-                        <label className="text-[9px] text-zinc-500 uppercase tracking-widest block font-bold">Keywords / Tags (Comma-separated)</label>
+                        <label className="text-[9px] text-zinc-555 uppercase tracking-widest block font-bold">Keywords / Tags (Comma-separated)</label>
                         <input type="text" value={editTags} onChange={(e) => setEditTags(e.target.value)} className="w-full bg-zinc-990 border border-zinc-900 rounded-xl px-4 py-3 text-xs text-white focus:outline-none" />
                       </div>
                     </div>
@@ -1249,7 +1245,6 @@ export default function BusinessProductsShelf() {
                   <h3 className="text-sm font-black text-white uppercase tracking-wider">{mediaProduct.name}</h3>
                 </div>
 
-                {/* Media gallery items list */}
                 <div className="grid grid-cols-3 gap-3">
                   {mediaProduct.images.map((imgUrl, i) => (
                     <div key={i} className="h-24 rounded-lg bg-zinc-900 border border-zinc-800 overflow-hidden">
@@ -1284,11 +1279,11 @@ export default function BusinessProductsShelf() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-850">
-                    <span className="text-[8px] text-zinc-500 uppercase block font-bold">Total Sales Volume</span>
+                    <span className="text-[8px] text-zinc-555 uppercase block font-bold">Total Sales Volume</span>
                     <span className="text-sm font-mono font-bold text-white mt-1 block">{viewingAnalyticsProd.totalSales} Units</span>
                   </div>
                   <div className="p-4 rounded-xl bg-zinc-900 border border-zinc-850">
-                    <span className="text-[8px] text-zinc-500 uppercase block font-bold">Gross Revenue</span>
+                    <span className="text-[8px] text-zinc-555 uppercase block font-bold">Gross Revenue</span>
                     <span className="text-sm font-mono font-bold text-emerald-400 mt-1 block">${(viewingAnalyticsProd.totalSales * viewingAnalyticsProd.price).toLocaleString()}</span>
                   </div>
                 </div>
@@ -1311,7 +1306,7 @@ export default function BusinessProductsShelf() {
                   <span className="text-[8px] text-zinc-500 font-mono tracking-widest uppercase block">{viewingInventoryProd.sku}</span>
                   <h3 className="text-sm font-black text-white uppercase tracking-wider">{viewingInventoryProd.name}</h3>
                 </div>
-                <div className="p-5 rounded-xl bg-zinc-900 border border-zinc-850 text-left space-y-3 text-[10px] text-zinc-400">
+                <div className="p-5 rounded-xl bg-zinc-900 border border-zinc-855 text-left space-y-3 text-[10px] text-zinc-400">
                   <div className="flex justify-between"><span>Central Jersey Depot:</span><span className="text-white font-bold">{Math.floor(viewingInventoryProd.stock * 0.6)} Units</span></div>
                   <div className="flex justify-between"><span>West Oakland Depot:</span><span className="text-white font-bold">{Math.floor(viewingInventoryProd.stock * 0.4)} Units</span></div>
                   <div className="flex justify-between border-t border-zinc-800 pt-2 text-white font-bold"><span>Total On Hand:</span><span>{viewingInventoryProd.stock} Units</span></div>

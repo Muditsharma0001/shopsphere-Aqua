@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import ScrollFoundation from '../../../components/ScrollFoundation';
 import Navbar from '../../../components/Navbar';
 import { motion, AnimatePresence } from 'framer-motion';
+import Link from 'next/link';
 
 interface BusinessData {
   totalUsers: number;
@@ -207,6 +208,13 @@ export default function BusinessDashboard() {
 
             {/* Sidebar Tab Lists */}
             <div className="p-3 rounded-3xl border border-zinc-900 bg-zinc-950/20 space-y-4">
+              <div className="space-y-1 border-b border-zinc-900/60 pb-3">
+                <span className="block text-[8px] font-bold text-zinc-600 uppercase tracking-widest px-4 hidden lg:block font-mono">Workspace</span>
+                <Link href="/business/product-catalog" className="w-full px-4 py-2.5 rounded-xl transition-all flex items-center justify-center lg:justify-start gap-3 text-[10px] font-bold uppercase tracking-wider text-zinc-500 hover:text-white hover:bg-zinc-900/30" title="Product Catalog">
+                  <span>📦</span> <span className="hidden lg:inline">Product Catalog</span>
+                </Link>
+              </div>
+
               {['HQ Control', 'Catalog', 'Assets', 'CMS', 'Operations', 'Growth', 'HQ Settings'].map((cat) => (
                 <div key={cat} className="space-y-1">
                   <span className="block text-[8px] font-bold text-zinc-600 uppercase tracking-widest px-4 hidden lg:block">{cat}</span>
@@ -266,6 +274,17 @@ export default function BusinessDashboard() {
                         </span>
                       </div>
                       <button onClick={() => setMobileDrawerOpen(false)} className="text-zinc-500 hover:text-white text-xs">✕</button>
+                    </div>
+
+                    <div className="space-y-4 border-b border-zinc-900/60 pb-4">
+                      <span className="block text-[8px] font-bold text-zinc-650 uppercase tracking-widest px-2 font-mono">Workspace</span>
+                      <Link
+                        href="/business/product-catalog"
+                        onClick={() => setMobileDrawerOpen(false)}
+                        className="w-full px-4 py-3 rounded-xl transition-all flex items-center gap-3 text-xs font-bold uppercase tracking-wider text-zinc-500 hover:text-white hover:bg-zinc-900/30"
+                      >
+                        📦 Product Catalog
+                      </Link>
                     </div>
 
                     <div className="space-y-6">
