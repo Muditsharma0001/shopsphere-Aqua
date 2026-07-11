@@ -5,7 +5,7 @@
   "main": "dist/index.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec tsx src/index.ts",
-    "build": "prisma generate && tsc --build",
+    "build": "tsc -p ../../packages/shared-types && prisma generate && tsc --build",
     "clean": "tsc --build --clean",
     "start": "node dist/index.js"
   },
