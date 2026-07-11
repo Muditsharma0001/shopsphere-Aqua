@@ -27,6 +27,7 @@ export default function BusinessDashboard() {
   const [loading, setLoading] = useState(true);
   const [forbidden, setForbidden] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
 
   // Form mock states for modules
   const [couponCode, setCouponCode] = useState('');
@@ -192,33 +193,36 @@ export default function BusinessDashboard() {
           )}
         </AnimatePresence>
 
-        <div className="max-w-7xl mx-auto px-4 pt-32 pb-24 relative z-20 flex gap-8">
+        <div className="max-w-7xl mx-auto px-4 pt-32 pb-24 relative z-20 flex flex-col md:flex-row gap-8">
           
           {/* Collapse/Navigation Sidebar */}
-          <div className="w-64 shrink-0 space-y-6">
-            <div className="p-5 rounded-3xl border border-zinc-900 bg-zinc-950/40">
-              <h3 className="text-xs font-black text-white uppercase tracking-wider">Business OS</h3>
-              <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold block mt-1">
+          <div className="hidden md:block md:w-20 lg:w-64 shrink-0 space-y-6">
+            <div className="p-5 rounded-3xl border border-zinc-900 bg-zinc-950/40 text-center lg:text-left">
+              <h3 className="text-xs font-black text-white uppercase tracking-wider hidden lg:block">Business OS</h3>
+              <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold block mt-1 hidden lg:block">
                 ShopSphere Operations Control
               </span>
+              <span className="text-lg font-black text-white block lg:hidden">🏢</span>
             </div>
 
             {/* Sidebar Tab Lists */}
             <div className="p-3 rounded-3xl border border-zinc-900 bg-zinc-950/20 space-y-4">
               {['HQ Control', 'Catalog', 'Assets', 'CMS', 'Operations', 'Growth', 'HQ Settings'].map((cat) => (
                 <div key={cat} className="space-y-1">
-                  <span className="block text-[8px] font-bold text-zinc-600 uppercase tracking-widest px-4">{cat}</span>
+                  <span className="block text-[8px] font-bold text-zinc-600 uppercase tracking-widest px-4 hidden lg:block">{cat}</span>
                   {menuTabs.filter((t) => t.category === cat).map((tab) => (
                     <button
                       key={tab.id}
                       onClick={() => setActiveTab(tab.id)}
-                      className={`w-full px-4 py-2.5 rounded-xl text-left text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-3 ${
+                      className={`w-full px-4 py-2.5 rounded-xl transition-all flex items-center justify-center lg:justify-start gap-3 text-[10px] font-bold uppercase tracking-wider ${
                         activeTab === tab.id
                           ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/10'
                           : 'text-zinc-500 hover:text-white hover:bg-zinc-900/30'
                       }`}
+                      title={tab.label}
                     >
-                      <span>{tab.icon}</span> {tab.label}
+                      <span>{tab.icon}</span>
+                      <span className="hidden lg:inline">{tab.label}</span>
                     </button>
                   ))}
                 </div>
@@ -226,8 +230,75 @@ export default function BusinessDashboard() {
             </div>
           </div>
 
+          {/* Mobile Drawer Trigger Floating Button */}
+          <div className="md:hidden fixed bottom-6 left-6 z-40">
+            <button
+              onClick={() => setMobileDrawerOpen(true)}
+              className="h-12 w-12 rounded-full bg-indigo-600 border border-indigo-400/20 text-white flex items-center justify-center shadow-2xl text-xl cursor-pointer"
+            >
+              ☰
+            </button>
+          </div>
+
+          {/* Mobile Slide-out Drawer */}
+          <AnimatePresence>
+            {mobileDrawerOpen && (
+              <div className="fixed inset-0 z-50 md:hidden flex justify-end">
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  onClick={() => setMobileDrawerOpen(false)}
+                  className="absolute inset-0 bg-black/70 backdrop-blur-sm"
+                />
+                <motion.div
+                  initial={{ x: '100%' }}
+                  animate={{ x: 0 }}
+                  exit={{ x: '100%' }}
+                  className="relative w-80 max-w-[85vw] bg-zinc-950 border-l border-zinc-900 p-6 overflow-y-auto h-full flex flex-col justify-between"
+                >
+                  <div className="space-y-6">
+                    <div className="flex justify-between items-center border-b border-zinc-900 pb-4">
+                      <div>
+                        <h3 className="text-xs font-black text-white uppercase tracking-wider">Business OS</h3>
+                        <span className="text-[7px] font-mono text-zinc-500 uppercase tracking-widest font-semibold block mt-0.5">
+                          ShopSphere Operations Control
+                        </span>
+                      </div>
+                      <button onClick={() => setMobileDrawerOpen(false)} className="text-zinc-500 hover:text-white text-xs">✕</button>
+                    </div>
+
+                    <div className="space-y-6">
+                      {['HQ Control', 'Catalog', 'Assets', 'CMS', 'Operations', 'Growth', 'HQ Settings'].map((cat) => (
+                        <div key={cat} className="space-y-2">
+                          <span className="block text-[8px] font-bold text-zinc-600 uppercase tracking-widest px-2">{cat}</span>
+                          <div className="grid grid-cols-2 gap-2">
+                            {menuTabs.filter((t) => t.category === cat).map((tab) => (
+                              <button
+                                key={tab.id}
+                                onClick={() => { setActiveTab(tab.id); setMobileDrawerOpen(false); }}
+                                className={`px-3 py-2 rounded-xl text-left text-[9px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 ${
+                                  activeTab === tab.id
+                                    ? 'bg-indigo-600 text-white'
+                                    : 'text-zinc-500 hover:text-white hover:bg-zinc-900/30'
+                                }`}
+                              >
+                                <span>{tab.icon}</span>
+                                <span className="truncate">{tab.label}</span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
+
           {/* Business OS Content Area */}
-          <div className="flex-1 p-8 rounded-3xl border border-zinc-900 bg-zinc-950/40 min-h-[600px] shadow-2xl">
+          <div className="flex-1 p-4 md:p-8 rounded-3xl border border-zinc-900 bg-zinc-950/40 min-h-[600px] shadow-2xl overflow-hidden">
             <AnimatePresence mode="wait">
               {activeTab === 'dashboard' && data && (
                 <motion.div
