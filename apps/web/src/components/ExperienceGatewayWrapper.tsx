@@ -17,22 +17,12 @@ export default function ExperienceGatewayWrapper({ children }: { children: React
     }
   }, []);
 
-  const handleCustomerSelect = async () => {
+  const handleCustomerSelect = () => {
     setLoading(true);
     setErrorMsg(null);
-    try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
-      // Trigger background authentication for demo customer
-      const res = await fetch(`${apiUrl}/auth/demo-login?role=CUSTOMER`, { credentials: 'include' });
-      // Because demo-login redirects, a fetch call might get redirected. We just need to make sure credentials cookie is registered.
-      // Alternatively, we can redirect through the window but set experienceBypass so when it reloads on "/" the overlay is hidden.
-      sessionStorage.setItem('experienceBypass', 'true');
-      window.location.href = `${apiUrl}/auth/demo-login?role=CUSTOMER`;
-    } catch (err) {
-      console.error(err);
-      setErrorMsg('Failed to initialize demo customer session.');
-      setLoading(false);
-    }
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001';
+    sessionStorage.setItem('experienceBypass', 'true');
+    window.location.href = `${apiUrl}/auth/demo-login?role=CUSTOMER`;
   };
 
   const handleBusinessSelect = () => {
